@@ -829,6 +829,28 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
     }
 
     /**
+     * 物理键盘 Alt+按键：直接上屏设备键帽副字符（Key2 Alt 层，如 Alt+Q=1），
+     * 不进入 Rime 编码/数字选词管线。
+     * 存在未上屏编码时先按回车语义上屏原始编码（与 commitComposingInput 一致），
+     * 避免编码悬挂在候选栏；随后提交 Alt 字符并清空候选态。
+     */
+    internal fun handleHardwareAltChar(ch: Char) {
+        postRimeJob {
+            val state = service.uiState.value
+            val candState = service.candidateState.value
+            service.calculatorEngine.clear()
+            updateCalculatorCandidates()
+            if (candState.isComposing) {
+                commitComposingInput(candState, state.currentSchemaId)
+            } else {
+                service.rimeEngine.clearComposition()
+            }
+            resetEnterLikeCandidates(state.currentSchemaId)
+            withContext(Dispatchers.Main) { service.commitText(ch.toString()) }
+        }
+    }
+
+    /**
      * ascii 切换统一分发（key-processing 协程内执行）。
      *
      * 乐观更新：立即按目标模式切换 UI（主键盘布局/面板字符），不等引擎异步切换，

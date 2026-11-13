@@ -2164,6 +2164,19 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
             // 其余 Ctrl 组合（Ctrl+方向键词移动、Ctrl+Shift 系列等）交还系统与目标应用处理
             return super.onKeyDown(keyCode, event)
         }
+        // 物理键盘 Alt 组合：直接上屏按键副字符（Key2 等 QWERTY 机型键帽 Alt 层，
+        // 如 Alt+Q=1、Alt+M=?）。系统 keyCharacterMap 已定义 Alt 层字符，
+        // getUnicodeChar(metaState) 即该副字符；不进入 Rime 编码/数字选词管线，
+        // 避免组合态下 Alt+数字被误当作选词。Alt+功能键（退格/回车/方向键，无字符）
+        // 与 Ctrl+Alt 系列放行原逻辑；Alt 长按锁定（META_ALT_LOCKED）同效。
+        if ((e.isAltPressed || (e.metaState and KeyEvent.META_ALT_LOCKED) != 0) && !e.isCtrlPressed) {
+            val ch = e.getUnicodeChar(e.metaState or KeyEvent.META_ALT_ON)
+            if (ch != 0) {
+                keyRouter.handleHardwareAltChar(ch.toChar())
+                return true
+            }
+            return super.onKeyDown(keyCode, event)
+        }
         // Caps Lock 的 meta state 由系统自动维护，与 Shift 同效（物理键盘大小写切换）
         val isShifted = e.isShiftPressed || e.isCapsLockOn
         if (hasHardwareKeyboard && candidateState.value.candidates.isNotEmpty()) {
