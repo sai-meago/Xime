@@ -24,6 +24,7 @@ object SettingsRoutes {
     const val SmartPrediction = "smart_prediction"
     const val Correction = "correction"
     const val FuzzyPinyin = "fuzzy_pinyin"
+    const val WubiEnhance = "wubi_enhance"
     const val SpeechToText = "speech_to_text"
     const val About = "about"
     const val Developer = "developer"

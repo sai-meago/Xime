@@ -1779,6 +1779,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                 activeColor = accentCol,
                                 selectedTextColor = selectedTextCol,
                                 pinToBottom = SettingsPreferences.isHwCandidateBarPinBottom(this@XimeInputMethodService),
+                                candidateTextSize = SettingsPreferences.getCandidateTextSize(this@XimeInputMethodService),
                                 onCandidateClick = { index -> selectHwCandidate(index) },
                                 onPrevPage = { keyRouter.pageUp() },
                                 onNextPage = { keyRouter.pageDown() },

@@ -1060,6 +1060,19 @@
     <string name="s_fuzzy_apply_failed">套用失敗，請稍後重試</string>
     <string name="s_fuzzy_shiyongfangan">適用方案</string>
     <string name="s_fuzzy_user_patch_conflict">以下方案已有自訂拼寫規則，未自動套用：%1$s</string>
+    <string name="s_wubizengqiang">五筆增強</string>
+    <string name="s_wubizengqiang_jianjie">四碼上屏、Z鍵反查、長句連打</string>
+    <string name="s_shuruzengqiang">輸入增強</string>
+    <string name="s_sima_zhijie_shangping">四碼直接上屏</string>
+    <string name="s_sima_shangping_shuoming">輸入滿四碼自動上屏首選，無需按空格；五筆拼音混輸方案預設未開啟</string>
+    <string name="s_zjian_pinyin_fancha">Z鍵拼音反查</string>
+    <string name="s_zjian_fancha_shuoming">忘記字根時按 Z 接拼音查字，候選帶五筆編碼提示（僅純五筆方案生效）</string>
+    <string name="s_wubi_changju_lianda">長句連打</string>
+    <string name="s_wubi_changju_shuoming">連續輸入編碼自動組詞組句，適合長文本（精度略降，可隨時關閉）</string>
+    <string name="s_wubi_scope_hint">設定寫入五筆方案的 custom.yaml 並自動部署生效；五筆拼音混輸自帶拼音混輸、繁體五筆自帶 Z 鍵反查</string>
+    <string name="s_wubi_zreverse_jiaochangju_shuoming">反查結果帶五筆編碼註釋，方便學習字根；四碼上屏與長句連打可同時開啟</string>
+    <string name="s_wubi_none">當前沒有已安裝的五筆方案</string>
+    <string name="s_wubi_user_patch_conflict">以下方案已有手動補丁，未自動套用：%1$s</string>
     <string name="s_fuzzy_rule_z_zh">z = zh</string>
     <string name="s_fuzzy_rule_c_ch">c = ch</string>
     <string name="s_fuzzy_rule_s_sh">s = sh</string>

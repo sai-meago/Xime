@@ -59,6 +59,8 @@ fun HardwareKeyboardCandidateBar(
     selectedTextColor: Color = activeColor,
     /** true=卡片固定屏幕底部（设置项），false=跟随光标定位。 */
     pinToBottom: Boolean = false,
+    /** 候选字号（sp）：跟随设置「候选字号」，与软键盘候选栏共用同一设置。 */
+    candidateTextSize: Int = 15,
     /** 候选点选上屏（index 与显示顺序一致，0..9）。 */
     onCandidateClick: ((Int) -> Unit)? = null,
     onPrevPage: (() -> Unit)? = null,
@@ -160,7 +162,7 @@ fun HardwareKeyboardCandidateBar(
                 if (displayText.isNotEmpty()) {
                     Text(
                         text = displayText,
-                        fontSize = 13.sp,
+                        fontSize = (candidateTextSize - 2).coerceAtLeast(11).sp,
                         color = activeColor,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -187,7 +189,7 @@ fun HardwareKeyboardCandidateBar(
                             ) {
                                 Text(
                                     text = "$labelText $candidate",
-                                    fontSize = 15.sp,
+                                    fontSize = candidateTextSize.sp,
                                     color = if (isActive) selectedTextColor else candidateTextColor,
                                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
                                     maxLines = 1,
@@ -209,7 +211,7 @@ fun HardwareKeyboardCandidateBar(
                         if (hasPrevPage) {
                             Text(
                                 "◀",
-                                fontSize = 12.sp,
+                                fontSize = (candidateTextSize - 3).coerceAtLeast(10).sp,
                                 color = candidateTextColor.copy(alpha = 0.6f),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
@@ -220,7 +222,7 @@ fun HardwareKeyboardCandidateBar(
                         if (hasNextPage) {
                             Text(
                                 "▶",
-                                fontSize = 12.sp,
+                                fontSize = (candidateTextSize - 3).coerceAtLeast(10).sp,
                                 color = candidateTextColor.copy(alpha = 0.6f),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))

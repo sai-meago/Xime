@@ -61,6 +61,11 @@ object SettingsPreferences {
     const val KEY_HARDWARE_KEYBOARD_DETECTION_ENABLED = "hardware_keyboard_detection_enabled"
     private const val KEY_HW_CANDIDATE_BAR_PIN_BOTTOM = "hw_candidate_bar_pin_bottom"
 
+    // 五笔增强（WubiEnhanceManager）：状态存 prefs，custom.yaml 为派生物
+    private const val KEY_WUBI_AUTO_SELECT = "wubi_auto_select"
+    private const val KEY_WUBI_Z_REVERSE = "wubi_z_reverse"
+    private const val KEY_WUBI_LONG_SENTENCE = "wubi_long_sentence"
+
     private const val KEY_RIME_INSTALLATION_ID = "rime_installation_id"
 
     private const val KEY_LAST_RIME_SYNC_AT = "last_rime_sync_at"
@@ -104,6 +109,30 @@ object SettingsPreferences {
 
     fun setHwCandidateBarPinBottom(context: Context, pinned: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, pinned).apply()
+    }
+
+    /** 五笔四码直接上屏（默认开：与内置 wubi86 方案原行为一致）。 */
+    fun isWubiAutoSelect(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_WUBI_AUTO_SELECT, true)
+
+    fun setWubiAutoSelect(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_WUBI_AUTO_SELECT, enabled).apply()
+    }
+
+    /** 五笔 Z 键拼音反查（默认关：纯五笔方案追加 reverse_lookup）。 */
+    fun isWubiZReverse(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_WUBI_Z_REVERSE, false)
+
+    fun setWubiZReverse(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_WUBI_Z_REVERSE, enabled).apply()
+    }
+
+    /** 五笔长句连打（默认关：开启 enable_sentence 连续编码组句）。 */
+    fun isWubiLongSentence(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_WUBI_LONG_SENTENCE, false)
+
+    fun setWubiLongSentence(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_WUBI_LONG_SENTENCE, enabled).apply()
     }
     
     private const val KEY_LAYOUT_PREFIX = "layout_pref_"

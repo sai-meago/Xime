@@ -41,6 +41,7 @@ import androidx.compose.material.icons.twotone.Storefront
 import androidx.compose.material.icons.twotone.Straighten
 import androidx.compose.material.icons.twotone.TableChart
 import androidx.compose.material.icons.twotone.ToggleOn
+import androidx.compose.material.icons.twotone.TextFields
 import androidx.compose.material.icons.twotone.Translate
 import androidx.compose.material.icons.twotone.TypeSpecimen
 import androidx.compose.material.icons.twotone.Vibration
@@ -89,6 +90,7 @@ fun SettingsMainContent(
     onNavigateToSmartPrediction: () -> Unit,
     onNavigateToCorrection: () -> Unit = {},
     onNavigateToFuzzyPinyin: () -> Unit = {},
+    onNavigateToWubiEnhance: () -> Unit = {},
     onNavigateToSpeechToText: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onNavigateToClipboard: () -> Unit = {},
@@ -290,6 +292,19 @@ fun SettingsMainContent(
                         title = tr(R.string.s_mohupinyin),
                         subtitle = tr(R.string.s_mohupinyin_jianjie),
                         onClick = onNavigateToFuzzyPinyin,
+                        showArrow = true
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 56.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    // 五笔增强同样写五笔方案 custom.yaml、需部署，紧邻模糊拼音归方案类
+                    SettingsItem(
+                        icon = Icons.TwoTone.TextFields,
+                        title = tr(R.string.s_wubizengqiang),
+                        subtitle = tr(R.string.s_wubizengqiang_jianjie),
+                        onClick = onNavigateToWubiEnhance,
                         showArrow = true
                     )
                 })

@@ -4,6 +4,7 @@ import com.kingzcheung.xime.util.FileLogger
 import android.content.Context
 import android.util.Log
 import com.kingzcheung.xime.settings.PersonalDictManager
+import com.kingzcheung.xime.settings.WubiEnhanceManager
 import com.kingzcheung.xime.settings.SchemaConfigHelper
 import com.kingzcheung.xime.settings.FuzzyPinyinManager
 import com.kingzcheung.xime.settings.MarketVersionStore
@@ -67,6 +68,9 @@ object RimeConfigHelper {
         FuzzyPinyinManager.reconcile(context)
         // 为所有启用方案打个人词库补丁
         PersonalDictManager.ensureSchemaPacks(context)
+        // 五笔增强是用户级状态：同模糊拼音模式按 prefs 重放；置于个人词库之后，
+        // 以便托管块吸纳其 translators/+ 追加项，避免 YAML 重复键互相覆盖。
+        WubiEnhanceManager.reconcile(context)
         // 不再在初始化阶段删 build：build 是否重建统一由 ensureDeployment()
         // 按增量优先策略决定，避免配置变化即全量重编译（60MB 词库持锁 30s+）。
 
@@ -234,6 +238,8 @@ object RimeConfigHelper {
         SchemaManager.applyEnabledSchemasToDefaultYaml(context)
         FuzzyPinyinManager.reconcile(context)
         runBlocking { PersonalDictManager.ensureSchemaPacks(context) }
+        // 同异步路径：个人词库先写、五笔增强托管块吸纳，顺序不可颠倒
+        WubiEnhanceManager.reconcile(context)
         // build 是否重建统一由 ensureDeployment() 决定（缺失/半成品时强制 fullCheck）
 
         return Pair(rimeDir.absolutePath, rimeDir.absolutePath)

@@ -186,6 +186,12 @@ class AsrInferenceService : Service() {
      * 不用 [AsrModelManager.getSelectedModelInfo]：跨进程读偏好可能滞后于刚切换的模型。
      */
     private fun createAsrHandle(modelDir: String): Long {
+        // Key2 精简包未带 asr_jni：直接返回 0，startAsr 走既有失败路径（false），
+        // 避免 :asr 进程 UnsatisfiedLinkError 崩溃。
+        if (!AsrNative.loaded) {
+            Log.e(TAG, "asr_jni not packaged (slim build), ASR unavailable")
+            return 0L
+        }
         return try {
             val dir = File(modelDir)
             val info = AsrModelManager(this).getModelInfo(dir.name)

@@ -51,8 +51,8 @@ android {
         applicationId = "com.kingzcheung.xime"
         minSdk = 28
         targetSdk = 35
-        versionCode = 20261114
-        versionName = "3.5.0-alpha.6-key2-v2-arm64"
+        versionCode = 20261115
+        versionName = "3.5.0-alpha.7-key2-v3-arm64"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -131,6 +131,18 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            // Key2 个人精简版：不打包语音/手写/联想推理链路的三方与自建 native 库
+            //（用户不用这些功能）。onnxruntime 为三者共同依赖，排除后 
+            // NativeOnnxEngine/HandwritingNativeEngine 均按已实现的缺库优雅降级；
+            // asr_jni 仅在 :asr 独立进程加载，主进程不受影响。
+            // librime_jni/quickjs/xime_p2p_jni 为输入/插件/互联核心，保留。
+            excludes += listOf(
+                "**/libonnxruntime.so",
+                "**/libonnx_env.so",
+                "**/libonnx_jni.so",
+                "**/libasr_jni.so",
+                "**/libhandwriting_jni.so",
+            )
         }
     }
     ndkVersion = "29.0.14206865"
