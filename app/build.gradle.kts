@@ -52,7 +52,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = 20261115
-        versionName = "3.5.0-alpha.8-key2-v4-arm64"
+        versionName = "3.5.0-alpha.9-key2-v5-arm64"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -144,20 +144,9 @@ android {
                 "**/libhandwriting_jni.so",
             )
         }
-        // 只保留五笔(wubi86) + 简体拼音(pinyin_simp) 方案：
-        // 排除简繁(wubi86_trad/简入繁出opencc)、98五笔、手写、T9、数字等冗余方案资产。
-        resources {
-            excludes += listOf(
-                "assets/rime/wubi98.dict.yaml",
-                "assets/rime/wubi98.schema.yaml",
-                "assets/rime/wubi86_trad.schema.yaml",
-                "assets/rime/wubi86_trad_pinyin.schema.yaml",
-                "assets/rime/handwriting.schema.yaml",
-                "assets/rime/numbers.schema.yaml",
-                "assets/rime/t9_pinyin.schema.yaml",
-                "assets/rime/opencc/**",
-            )
-        }
+        // 只保留五笔(wubi86) + 简体拼音(pinyin_simp) 系列方案：
+        // 冗余方案(98五笔/简繁wubi86_trad/手写/T9/数字/简入繁出opencc)的资产删除
+        // 放在下方 merge*Assets 后置任务里（packaging.resources.excludes 对 assets 不生效）。
     }
     ndkVersion = "29.0.14206865"
 
@@ -308,6 +297,29 @@ dependencies {
     constraints {
         implementation("androidx.concurrent:concurrent-futures:1.2.0") {
             because("test dependencies (espresso 3.7.0) require 1.2.0")
+        }
+    }
+}
+
+// 精简方案资产：packaging.resources.excludes 对 assets 不生效，改为合并资产后置删除
+// 冗余方案（98五笔/手写/T9/数字/繁简 wubi86_trad/简入繁出 opencc），只保留五笔+简体拼音。
+tasks.configureEach {
+    if (name.startsWith("merge") && name.endsWith("Assets")) {
+        doLast {
+            val base = layout.buildDirectory.dir("intermediates/assets").get().asFile
+            if (!base.isDirectory) return@doLast
+            base.walkTopDown().forEach { dir ->
+                if (!dir.isDirectory) return@forEach
+                val rime = java.io.File(dir, "rime")
+                if (!rime.isDirectory) return@forEach
+                listOf(
+                    "wubi98.dict.yaml", "wubi98.schema.yaml",
+                    "wubi86_trad.schema.yaml", "wubi86_trad_pinyin.schema.yaml",
+                    "handwriting.schema.yaml", "numbers.schema.yaml", "t9_pinyin.schema.yaml",
+                ).forEach { name -> java.io.File(rime, name).delete() }
+                val opencc = java.io.File(rime, "opencc")
+                if (opencc.isDirectory) opencc.deleteRecursively()
+            }
         }
     }
 }
