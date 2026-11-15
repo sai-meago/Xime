@@ -113,7 +113,7 @@ class WubiEnhanceManagerTest {
         // 全文只允许一个 translators/+ 键（YAML 重复键会后者覆盖前者）
         assertEquals(
             1,
-            Regex("\"engine/translators\\+\"").findAll(text).count(),
+            Regex("\"engine/translators/\\+\"").findAll(text).count(),
         )
         // 个人词库的 custom_phrase 配置节点保留
         assertTrue(text.contains("\"custom_phrase\":"))
@@ -195,7 +195,7 @@ class WubiEnhanceManagerTest {
         assertTrue(text.contains("- table_translator@custom_phrase"))
         assertEquals(
             1,
-            Regex("\"engine/translators\\+\"").findAll(text).count(),
+            Regex("\"engine/translators/\\+\"").findAll(text).count(),
         )
     }
 }
