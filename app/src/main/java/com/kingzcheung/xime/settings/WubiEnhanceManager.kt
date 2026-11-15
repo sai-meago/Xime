@@ -224,7 +224,10 @@ object WubiEnhanceManager {
     private fun buildBlock(schemaId: String, spec: WriteSpec, absorbCustomPhrase: Boolean): String =
         buildString {
             append(BEGIN).append('\n')
-            if (spec.autoSelect) {
+            // 长句连打需连续编码组句；四码自动上屏/定长会掐断组句，二者互斥——
+            // 开启长句时强制关闭四码上屏（并去掉 max_code_length 上限）。
+            val fourCode = spec.autoSelect && !spec.longSentence
+            if (fourCode) {
                 append("  \"speller/auto_select\": true\n")
                 append("  \"speller/auto_select_unique_candidate\": true\n")
                 append("  \"speller/max_code_length\": 4\n")
@@ -234,7 +237,7 @@ object WubiEnhanceManager {
             }
             if (spec.longSentence) {
                 append("  \"translator/enable_sentence\": true\n")
-                append("  \"translator/max_phrase_length\": 10\n")
+                append("  \"translator/max_phrase_length\": 20\n")
             } else {
                 append("  \"translator/enable_sentence\": false\n")
             }

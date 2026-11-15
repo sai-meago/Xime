@@ -1074,6 +1074,7 @@
     <string name="s_wubi_zreverse_jiaochangju_shuoming">反查结果带五笔编码注释，方便学习字根；四码上屏与长句连打可同时开启</string>
     <string name="s_wubi_none">当前没有已安装的五笔方案</string>
     <string name="s_wubi_user_patch_conflict">以下方案已有手动补丁，未自动应用：%1$s</string>
+    <string name="s_wubi_changju_maodun">长句连打与四码直接上屏互斥：开启长句后四码上屏自动失效，方便连续编码组句</string>
     <string name="s_fuzzy_rule_z_zh">z = zh</string>
     <string name="s_fuzzy_rule_c_ch">c = ch</string>
     <string name="s_fuzzy_rule_s_sh">s = sh</string>

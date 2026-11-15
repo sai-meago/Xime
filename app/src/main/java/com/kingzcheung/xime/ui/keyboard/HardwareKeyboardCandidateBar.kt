@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
-private const val MAX_VISIBLE_CANDIDATES = 10
 private const val ESTIMATED_CARD_HEIGHT_DP = 180
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -61,6 +60,8 @@ fun HardwareKeyboardCandidateBar(
     pinToBottom: Boolean = false,
     /** 候选字号（sp）：跟随设置「候选字号」，与软键盘候选栏共用同一设置。 */
     candidateTextSize: Int = 15,
+    /** 每页候选数量：跟随设置「每页候选数」，替代原先硬编码的 10 个。 */
+    pageSize: Int = 3,
     /** 候选点选上屏（index 与显示顺序一致，0..9）。 */
     onCandidateClick: ((Int) -> Unit)? = null,
     onPrevPage: (() -> Unit)? = null,
@@ -176,7 +177,7 @@ fun HardwareKeyboardCandidateBar(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        candidates.take(MAX_VISIBLE_CANDIDATES).forEachIndexed { index, candidate ->
+                        candidates.take(pageSize.coerceIn(1, 30)).forEachIndexed { index, candidate ->
                             val isActive = index == highlightIndex
                             val label = (index + 1) % 10
                             val labelText = if (index == 9) "0" else "$label"

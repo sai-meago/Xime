@@ -79,13 +79,16 @@ class WubiEnhanceManagerTest {
     }
 
     @Test
-    fun `long sentence writes enable_sentence and phrase length`() {
+    fun `long sentence writes enable_sentence and forces four-code off`() {
         val dir = rimeDir()
         install(dir, "wubi98")
-        reconcile(dir, setOf("wubi98"), longSentence = true)
+        // 四码上屏默认开，长句开启时应强制关闭（避免四码一到就上屏、句子组不起来）
+        reconcile(dir, setOf("wubi98"), autoSelect = true, longSentence = true)
         val text = File(dir, "wubi98.custom.yaml").readText()
         assertTrue(text.contains("\"translator/enable_sentence\": true"))
-        assertTrue(text.contains("\"translator/max_phrase_length\": 10"))
+        assertTrue(text.contains("\"translator/max_phrase_length\": 20"))
+        assertTrue("长句下四码必须关", text.contains("\"speller/auto_select\": false"))
+        assertFalse("长句下不再设定长码", text.contains("max_code_length"))
     }
 
     @Test

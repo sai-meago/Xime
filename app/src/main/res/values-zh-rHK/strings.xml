@@ -1073,6 +1073,7 @@
     <string name="s_wubi_zreverse_jiaochangju_shuoming">反查結果帶五筆編碼註釋，方便學習字根；四碼上屏與長句連打可同時開啟</string>
     <string name="s_wubi_none">當前沒有已安裝的五筆方案</string>
     <string name="s_wubi_user_patch_conflict">以下方案已有手動補丁，未自動套用：%1$s</string>
+    <string name="s_wubi_changju_maodun">長句連打與四碼直接上屏互斥：開啟長句後四碼上屏自動失效，需連續編碼組句</string>
     <string name="s_fuzzy_rule_z_zh">z = zh</string>
     <string name="s_fuzzy_rule_c_ch">c = ch</string>
     <string name="s_fuzzy_rule_s_sh">s = sh</string>

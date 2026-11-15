@@ -52,7 +52,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = 20261115
-        versionName = "3.5.0-alpha.7-key2-v3-arm64"
+        versionName = "3.5.0-alpha.8-key2-v4-arm64"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -142,6 +142,20 @@ android {
                 "**/libonnx_jni.so",
                 "**/libasr_jni.so",
                 "**/libhandwriting_jni.so",
+            )
+        }
+        // 只保留五笔(wubi86) + 简体拼音(pinyin_simp) 方案：
+        // 排除简繁(wubi86_trad/简入繁出opencc)、98五笔、手写、T9、数字等冗余方案资产。
+        resources {
+            excludes += listOf(
+                "assets/rime/wubi98.dict.yaml",
+                "assets/rime/wubi98.schema.yaml",
+                "assets/rime/wubi86_trad.schema.yaml",
+                "assets/rime/wubi86_trad_pinyin.schema.yaml",
+                "assets/rime/handwriting.schema.yaml",
+                "assets/rime/numbers.schema.yaml",
+                "assets/rime/t9_pinyin.schema.yaml",
+                "assets/rime/opencc/**",
             )
         }
     }

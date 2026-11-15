@@ -100,11 +100,7 @@ fun SettingsMainContent(
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    // 扩展商店可更新计数：进主页恢复缓存并按节流后台刷新（失败静默），展示在入口角标
-    LaunchedEffect(Unit) {
-        MarketUpdateChecker.maybeRefresh(context)
-    }
-    val marketUpdates by MarketUpdateChecker.summary.collectAsStateWithLifecycle()
+    // 扩展商店可更新计数：入口已移除（精简版），不再后台拉取商店更新
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -311,84 +307,13 @@ fun SettingsMainContent(
             }
 
             item {
-                SettingsSection(title = tr(R.string.s_kuozhan), content = {
-                    SettingsItem(
-                        icon = Icons.TwoTone.Storefront,
-                        title = tr(R.string.s_kuozhanshangdian),
-                        subtitle = tr(R.string.s_xiazaishurufangan_moxing_chajian),
-                        onClick = onNavigateToMarket,
-                        showArrow = true,
-                        badgeText = marketUpdates.totalUpdates.takeIf { it > 0 }
-                            ?.let { tr(R.string.s_xiangkegengxin, it) }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 56.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                    SettingsItem(
-                        icon = Icons.TwoTone.Extension,
-                        title = tr(R.string.s_chajianguanli),
-                        subtitle = tr(R.string.s_guanliyianzhuangdechajian),
-                        onClick = onNavigateToPlugins,
-                        showArrow = true
-                    )
-                })
-            }
-
-            item {
                 SettingsSection(title = tr(R.string.s_zhineng), content = {
-                    SettingsItem(
-                        icon = Icons.TwoTone.AutoAwesome,
-                        title = tr(R.string.s_zhinenglianxiang),
-                        subtitle = tr(R.string.s_jiyu_ai_moxingdezhinenglianxia_5cce9),
-                        onClick = onNavigateToSmartPrediction,
-                        showArrow = true
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 56.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
                     SettingsItem(
                         icon = Icons.TwoTone.AutoFixHigh,
                         title = tr(R.string.s_zhinengjiucuo_shiyanxing),
                         subtitle = tr(R.string.s_ancuoxianglinjianshigeichujiuz_834ec),
                         onClick = onNavigateToCorrection,
                         showArrow = true
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 56.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                    // 模型文件管理跟随使用它的智能能力（联想 / 纠错）放在一处
-                    SettingsItem(
-                        icon = Icons.TwoTone.Straighten,
-                        title = tr(R.string.s_moxingguanli),
-                        subtitle = tr(R.string.s_guanlibendixiazaidezhinengmoxing),
-                        onClick = onNavigateToModelLocal,
-                        showArrow = true
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 56.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                    var sttEnabled by remember { mutableStateOf(SettingsPreferences.isSttEnabled(context)) }
-                    SettingsToggleItem(
-                        icon = Icons.TwoTone.GraphicEq,
-                        title = tr(R.string.s_yuyinzhuanwenben),
-                        subtitle = tr(R.string.s_zaixian_asr_fuwu_xuanzhuangyuy_74a1a),
-                        checked = sttEnabled,
-                        showArrow = true,
-                        onClick = {
-                            if (sttEnabled) onNavigateToSpeechToText()
-                        },
-                        onCheckedChange = { enabled ->
-                            sttEnabled = enabled
-                            SettingsPreferences.setSttEnabled(context, enabled)
-                        }
                     )
                 })
             }
