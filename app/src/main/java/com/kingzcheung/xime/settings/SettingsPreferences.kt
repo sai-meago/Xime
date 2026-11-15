@@ -59,6 +59,7 @@ object SettingsPreferences {
     
     const val KEY_LANDSCAPE_SPLIT_KEYBOARD_ENABLED = "landscape_split_keyboard_enabled"
     const val KEY_HARDWARE_KEYBOARD_DETECTION_ENABLED = "hardware_keyboard_detection_enabled"
+    private const val KEY_HW_CANDIDATE_BAR_PIN_BOTTOM = "hw_candidate_bar_pin_bottom"
 
     private const val KEY_RIME_INSTALLATION_ID = "rime_installation_id"
 
@@ -95,6 +96,14 @@ object SettingsPreferences {
 
     fun setHardwareKeyboardDetectionEnabled(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_HARDWARE_KEYBOARD_DETECTION_ENABLED, enabled).apply()
+    }
+
+    /** 物理键盘候选栏贴底显示（false=跟随光标定位）。 */
+    fun isHwCandidateBarPinBottom(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, false)
+
+    fun setHwCandidateBarPinBottom(context: Context, pinned: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, pinned).apply()
     }
     
     private const val KEY_LAYOUT_PREFIX = "layout_pref_"

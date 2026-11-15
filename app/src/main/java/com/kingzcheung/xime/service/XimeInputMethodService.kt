@@ -88,6 +88,7 @@ import com.kingzcheung.xime.ui.keyboard.KeyboardCallbacks
 import com.kingzcheung.xime.ui.keyboard.KeyboardLayoutState
 import com.kingzcheung.xime.viewmodel.KeyboardUiState
 import com.kingzcheung.xime.viewmodel.KeyboardViewModel
+import com.kingzcheung.xime.ui.keyboard.KeyboardDispatchAction
 import com.kingzcheung.xime.association.AssociationService
 import com.kingzcheung.xime.clipboard.ClipboardManager
 import com.kingzcheung.xime.clipboard.sync.ChannelPolicy
@@ -1728,7 +1729,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                     Box(modifier = Modifier.fillMaxSize()) {
                         // Sync FrameLayout height with Compose content height
                         val contentHeight = if (state.showKeyboardResize) state.resizePreviewHeightDp else floatingCardContentHeight + overlayPanelExtra
-                        val totalDp = if (state.isCompact || state.isFloatingMode) effectiveScreenH
+                        val totalDp = if ((state.isCompact && !state.hwSymbolPanel) || state.isFloatingMode) effectiveScreenH
                             else contentHeight + state.keyboardBottomPaddingDp + activeBottomDp
                         SideEffect {
                             // 容器物理高度 = Compose 内容总高（含底部留白），全模式统一。
@@ -1752,7 +1753,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                         val selectedTextCol = com.kingzcheung.xime.ui.theme.KeyboardThemes.getCandidateSelectedTextColor(state.themeId, isDark)
                         val keyboardBgColor = cardBg
                         val rootTheme = com.kingzcheung.xime.ui.theme.KeyboardThemes.getThemeById(state.themeId)
-                        if (state.isCompact && (cand.candidates.isNotEmpty() || cand.isShowingRecentClipboard || cand.inputText.isNotEmpty())) {
+                        if (state.isCompact && !state.hwSymbolPanel && (cand.candidates.isNotEmpty() || cand.isShowingRecentClipboard || cand.inputText.isNotEmpty())) {
                             HardwareKeyboardCandidateBar(
                                 inputText = cand.inputText,
                                 preeditText = cand.preeditText,
@@ -1777,8 +1778,13 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                 candidateTextColor = candidateTextCol,
                                 activeColor = accentCol,
                                 selectedTextColor = selectedTextCol,
+                                pinToBottom = SettingsPreferences.isHwCandidateBarPinBottom(this@XimeInputMethodService),
+                                onCandidateClick = { index -> selectHwCandidate(index) },
+                                onPrevPage = { keyRouter.pageUp() },
+                                onNextPage = { keyRouter.pageDown() },
+                                onCardBoundsChanged = { rect -> updateHwCandidateCardBounds(rect) },
                             )
-                        } else if (state.isCompact) {
+                        } else if (state.isCompact && !state.hwSymbolPanel) {
                             Box(modifier = Modifier.fillMaxSize())
                         } else {
                         // 非浮动：背景与键盘内容同区域，贴底覆盖键盘内容高度 + 底部导航栏留白，
@@ -2054,7 +2060,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                 gravity = android.view.Gravity.BOTTOM
             }
             val state = uiState.value
-            if (state.isFloatingMode || state.isCompact) {
+            if (state.isFloatingMode || (state.isCompact && !state.hwSymbolPanel)) {
                 view.updateLayoutParams<android.widget.FrameLayout.LayoutParams> {
                     height = android.view.ViewGroup.LayoutParams.MATCH_PARENT
                 }
@@ -2164,12 +2170,24 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
             // 其余 Ctrl 组合（Ctrl+方向键词移动、Ctrl+Shift 系列等）交还系统与目标应用处理
             return super.onKeyDown(keyCode, event)
         }
+        // 物理键盘 Sym 键（KEYCODE_SYM=63，G1 沿用至今的硬件键码）：紧凑模式下
+        // 开/关屏幕符号面板（面板可见、可触屏点选符号上屏）。仅在检测到硬件
+        // 键盘时接管，避免纯软键盘设备误触。
+        if (hasHardwareKeyboard && keyCode == KeyEvent.KEYCODE_SYM) {
+            toggleHwSymbolPanel()
+            return true
+        }
         // 物理键盘 Alt 组合：直接上屏按键副字符（Key2 等 QWERTY 机型键帽 Alt 层，
         // 如 Alt+Q=1、Alt+M=?）。系统 keyCharacterMap 已定义 Alt 层字符，
-        // getUnicodeChar(metaState) 即该副字符；不进入 Rime 编码/数字选词管线，
-        // 避免组合态下 Alt+数字被误当作选词。Alt+功能键（退格/回车/方向键，无字符）
-        // 与 Ctrl+Alt 系列放行原逻辑；Alt 长按锁定（META_ALT_LOCKED）同效。
-        if ((e.isAltPressed || (e.metaState and KeyEvent.META_ALT_LOCKED) != 0) && !e.isCtrlPressed) {
+        // getUnicodeChar(metaState|META_ALT_ON) 即该副字符；不进入 Rime 编码/选词
+        // 管线，避免组合态下 Alt+数字被误当作选词。触发条件：按住 Alt（isAltPressed
+        // = ALT_ON|ALT_LEFT|ALT_RIGHT）、系统 Alt 锁定位（META_ALT_LOCKED=0x200，
+        // META_ALT_MASK 不含此位须单独判）、或双击 Alt 的软锁定 hwAltLockOn（驱动
+        // 不下发锁定位的机型兜底，见 onKeyUp）。Alt+功能键（退格/回车/方向键，无字符）
+        // 与 Ctrl+Alt 系列放行原逻辑。掩码以数值判断：META_ALT_LOCKED 常量在部分
+        // SDK stub 下不可见（编译期 Unresolved）。
+        val altActive = e.isAltPressed || (e.metaState and 0x200) != 0 || hwAltLockOn
+        if (altActive && !e.isCtrlPressed) {
             val ch = e.getUnicodeChar(e.metaState or KeyEvent.META_ALT_ON)
             if (ch != 0) {
                 keyRouter.handleHardwareAltChar(ch.toChar())
@@ -2233,6 +2251,20 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        // 物理 Alt 键双击软锁定（Key2 驱动不下发 META_ALT_LOCKED 时的兜底）：
+        // 两次 Alt 抬起间隔 <350ms → 开启键帽副字符锁定模式；锁定中单击 Alt → 解除。
+        // 与系统级锁定位（metaState 0x200，见 onKeyDown）并存，两种来源任一生效即可。
+        if (keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode == KeyEvent.KEYCODE_ALT_RIGHT) {
+            val now = event?.eventTime ?: 0L
+            if (now - hwLastAltUpAt in 1..350) {
+                hwAltLockOn = !hwAltLockOn
+                hwLastAltUpAt = 0L
+            } else {
+                if (hwAltLockOn) hwAltLockOn = false
+                hwLastAltUpAt = now
+            }
+            return true
+        }
         // 物理 Shift 单击（按下到抬起间无其他按键）切换中英文，与 PC 中文输入法习惯一致；
         // 复用软键盘 earth 键的 ime_switch 链路（USER_TOGGLE，会话级不持久化）。
         // 组合使用（Shift+字母等）时放行 super；CapsLock 按住时按 Shift 是换挡意图，不切。
@@ -2519,10 +2551,68 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
             }
         }
 
+        // 硬件键盘会话态复位：Alt 软锁定与临时符号面板不跨输入会话存活
+        hwAltLockOn = false
+        hwLastAltUpAt = 0L
+        if (uiState.value.hwSymbolPanel) {
+            uiState.value = uiState.value.copy(hwSymbolPanel = false)
+        }
+        hwCandidateCardBounds = null
+
         attribute?.let { updateEnterKeyText(it) }
     }
     
     private val highlightIndex = mutableIntStateOf(0)
+
+    /** 硬件 Alt 软锁定（双击 Alt 开启键帽副字符模式；Key2 等机型驱动不下发 META_ALT_LOCKED 的兜底）。 */
+    private var hwAltLockOn = false
+
+    /** 上一次物理 Alt 抬起时间（eventTime），用于双击判定。 */
+    private var hwLastAltUpAt = 0L
+
+    /** 硬件候选栏卡片实测矩形（窗口坐标）：onComputeInsets 触摸区唯一真源；null=卡片隐藏。 */
+    private var hwCandidateCardBounds: android.graphics.Rect? = null
+
+    /** 物理键盘 Sym 键：紧凑模式下开/关屏幕符号面板（面板可见、可触屏点选上屏）。 */
+    private fun toggleHwSymbolPanel() {
+        val state = uiState.value
+        if (!state.isCompact) {
+            // 非紧凑（如已切到软键盘）时 Sym 仅做普通符号面板切换
+            keyboardViewModel.dispatch(KeyboardDispatchAction.ShowCommonSymbol)
+            return
+        }
+        val open = !state.hwSymbolPanel
+        uiState.value = state.copy(hwSymbolPanel = open)
+        keyboardViewModel.dispatch(
+            if (open) KeyboardDispatchAction.ShowCommonSymbol
+            else KeyboardDispatchAction.ExitPanel
+        )
+        // 触摸区随卡片显隐重算（紧凑候选栏区域 ↔ 全键盘区域）
+        window.window?.decorView?.requestApplyInsets()
+    }
+
+    /** 硬件候选栏候选点选：普通候选走引擎选词，剪贴板面板按条目类型上屏。 */
+    private fun selectHwCandidate(index: Int) {
+        val cs = candidateState.value
+        if (cs.isShowingRecentClipboard) {
+            val item = recentClipboardItemsState.value.getOrNull(index) ?: return
+            if (item.isImage) {
+                textCommit.selectClipboardImage(item)
+            } else {
+                textCommit.selectClipboardItem(item.text)
+            }
+        } else {
+            keyRouter.selectCandidate(index)
+        }
+        highlightIndex.intValue = 0
+    }
+
+    /** 硬件候选栏卡片实测矩形上报（Compose → insets 触摸区）。值未变化时不触发重算。 */
+    private fun updateHwCandidateCardBounds(bounds: android.graphics.Rect?) {
+        if (bounds == hwCandidateCardBounds) return
+        hwCandidateCardBounds = bounds
+        window.window?.decorView?.requestApplyInsets()
+    }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
@@ -2970,6 +3060,8 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
     override fun onDestroy() {
         super.onDestroy()
+        hwAltLockOn = false
+        hwCandidateCardBounds = null
         sharedPrefsListener?.let {
             SettingsPreferences.getPrefsPublic(this).unregisterOnSharedPreferenceChangeListener(it)
         }
@@ -3075,7 +3167,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
     override fun onComputeInsets(outInsets: Insets) {
         val state = uiState.value
-        if (state.isCompact) {
+        if (state.isCompact && !state.hwSymbolPanel) {
             try {
                 val decor = window.window?.decorView
                 if (decor != null) {
@@ -3084,7 +3176,15 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                     val h = (decor.height - navBarH).coerceAtLeast(0)
                     outInsets.contentTopInsets = h
                     outInsets.visibleTopInsets = h
-                    outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_VISIBLE
+                    // 触摸区：候选卡片实测矩形（可触屏点选）；卡片隐藏时保持原全透传行为
+                    // （VISIBLE + 顶部 contentTopInsets 全屏 → 等效无触摸区，事件穿透到应用）。
+                    val card = hwCandidateCardBounds
+                    if (card != null && card.width() > 0 && card.height() > 0) {
+                        outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_REGION
+                        outInsets.touchableRegion.set(card.left, card.top, card.right, card.bottom)
+                    } else {
+                        outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_VISIBLE
+                    }
                     return
                 }
             } catch (_: Exception) { }

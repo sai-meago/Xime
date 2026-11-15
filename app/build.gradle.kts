@@ -52,15 +52,13 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = 20261111
-        versionName = "3.5.0-alpha.5-key2alt"
+        versionName = "3.5.0-alpha.6-key2-v2-arm64"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // NDK 配置
-        ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-        }
+        // NDK 配置：架构由 splits.abi 统一控制（Key2 专用 arm64-v8a）。
+        // 注意：此处若再设 abiFilters 会与 splits.abi 冲突（Gradle 校验报错），故留空。
 
         // 构建信息
         buildConfigField("String", "GIT_HASH", "\"${getGitHash()}\"")
@@ -155,13 +153,13 @@ android {
         checkDependencies = true
     }
 
-    // 分架构打包
+    // 分架构打包（Key2 专用：仅 arm64-v8a）
     splits {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
+            include("arm64-v8a")
+            isUniversalApk = false
         }
     }
 }

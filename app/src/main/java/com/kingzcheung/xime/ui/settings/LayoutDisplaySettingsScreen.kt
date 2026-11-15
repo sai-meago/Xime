@@ -101,6 +101,34 @@ fun LayoutDisplaySettingsContent(
                         )
                     }
 
+                    var hwCandidateBarPinBottom by remember {
+                        mutableStateOf(SettingsPreferences.isHwCandidateBarPinBottom(context))
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = tr(R.string.s_wulijianpanhouxulantiedi),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = tr(R.string.s_kaiqihouhouxulan_guding_dibu),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = hwCandidateBarPinBottom,
+                            onCheckedChange = { enabled ->
+                                hwCandidateBarPinBottom = enabled
+                                SettingsPreferences.setHwCandidateBarPinBottom(context, enabled)
+                            }
+                        )
+                    }
+
                     var landscapeSplitKeyboardEnabled by remember {
                         mutableStateOf(SettingsPreferences.isLandscapeSplitKeyboardEnabled(context))
                     }

@@ -57,6 +57,8 @@ data class InputUIState(
     /** 已启用插件声明的工具栏按钮（候选池）。渲染时与内置按钮合并，插件禁用/卸载后自动不显示。 */
     val toolbarPluginButtons: List<ToolbarButtonItem.Plugin> = emptyList(),
     val isCompact: Boolean = false,
+    /** 物理键盘紧凑模式下由 Sym 键临时展开的屏幕键盘（符号面板）。 */
+    val hwSymbolPanel: Boolean = false,
     val isFloatingMode: Boolean = false,
     val floatingOffsetX: Int = 0,
     val floatingOffsetY: Int = 0,

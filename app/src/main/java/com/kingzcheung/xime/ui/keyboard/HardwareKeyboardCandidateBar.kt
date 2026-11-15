@@ -1,6 +1,7 @@
 package com.kingzcheung.xime.ui.keyboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -54,8 +57,19 @@ fun HardwareKeyboardCandidateBar(
     candidateTextColor: Color,
     activeColor: Color,
     selectedTextColor: Color = activeColor,
+    /** true=卡片固定屏幕底部（设置项），false=跟随光标定位。 */
+    pinToBottom: Boolean = false,
+    /** 候选点选上屏（index 与显示顺序一致，0..9）。 */
+    onCandidateClick: ((Int) -> Unit)? = null,
+    onPrevPage: (() -> Unit)? = null,
+    onNextPage: (() -> Unit)? = null,
+    /** 卡片窗口坐标矩形上报（onComputeInsets 触摸区）；卡片隐藏时回调 null。 */
+    onCardBoundsChanged: ((android.graphics.Rect?) -> Unit)? = null,
 ) {
-    if (candidates.isEmpty() && inputText.isEmpty()) return
+    if (candidates.isEmpty() && inputText.isEmpty()) {
+        onCardBoundsChanged?.invoke(null)
+        return
+    }
 
     val density = LocalDensity.current
     val displayText = if (preeditText.isNotEmpty()) preeditText else inputText
@@ -79,28 +93,38 @@ fun HardwareKeyboardCandidateBar(
     var actualCardHeight by remember { mutableIntStateOf(estCardHeightPx) }
 
     val cardXPx = with(density) {
-        val relX = cursorX - viewLoc[0]
-        val maxX = (screenWidthPx - halfEstPx * 2 - marginPx).coerceAtLeast(marginPx)
-        if (cursorVisible && relX > 0) {
-            (relX - halfEstPx).coerceIn(marginPx, maxX)
-        } else {
+        if (pinToBottom) {
+            // 贴底模式：水平居中
             (screenWidthPx - halfEstPx * 2).coerceAtLeast(0) / 2
+        } else {
+            val relX = cursorX - viewLoc[0]
+            val maxX = (screenWidthPx - halfEstPx * 2 - marginPx).coerceAtLeast(marginPx)
+            if (cursorVisible && relX > 0) {
+                (relX - halfEstPx).coerceIn(marginPx, maxX)
+            } else {
+                (screenWidthPx - halfEstPx * 2).coerceAtLeast(0) / 2
+            }
         }
     }
 
     val cardYPx = with(density) {
-        val maxY = (screenHeightPx - actualCardHeight - marginPx).coerceAtLeast(marginPx)
-        if (cursorVisible && cursorY > 0) {
-            val relY = cursorY - viewLoc[1]
-            if (relY + actualCardHeight + cardTopMarginPx <= screenHeightPx) {
-                (relY + cardTopMarginPx).coerceIn(marginPx, maxY)
-            } else if (relY - actualCardHeight - cardTopMarginPx >= marginPx) {
-                (relY - actualCardHeight - cardTopMarginPx).coerceIn(marginPx, maxY)
-            } else {
-                maxY
-            }
+        if (pinToBottom) {
+            // 贴底模式：固定屏幕底部（预留 8dp 边距）
+            (screenHeightPx - actualCardHeight - marginPx).coerceAtLeast(marginPx)
         } else {
-            with(density) { 60.dp.toPx() }.roundToInt().coerceIn(marginPx, maxY)
+            val maxY = (screenHeightPx - actualCardHeight - marginPx).coerceAtLeast(marginPx)
+            if (cursorVisible && cursorY > 0) {
+                val relY = cursorY - viewLoc[1]
+                if (relY + actualCardHeight + cardTopMarginPx <= screenHeightPx) {
+                    (relY + cardTopMarginPx).coerceIn(marginPx, maxY)
+                } else if (relY - actualCardHeight - cardTopMarginPx >= marginPx) {
+                    (relY - actualCardHeight - cardTopMarginPx).coerceIn(marginPx, maxY)
+                } else {
+                    maxY
+                }
+            } else {
+                with(density) { 60.dp.toPx() }.roundToInt().coerceIn(marginPx, maxY)
+            }
         }
     }
 
@@ -116,6 +140,17 @@ fun HardwareKeyboardCandidateBar(
                 .clip(RoundedCornerShape(8.dp))
                 .background(cardBackgroundColor)
                 .onSizeChanged { actualCardHeight = it.height }
+                .onGloballyPositioned { coords ->
+                    onCardBoundsChanged?.let { cb ->
+                        val r = coords.boundsInWindow()
+                        cb(
+                            android.graphics.Rect(
+                                r.left.toInt(), r.top.toInt(),
+                                r.right.toInt(), r.bottom.toInt()
+                            )
+                        )
+                    }
+                }
         ) {
             Column(
                 modifier = Modifier
@@ -143,7 +178,13 @@ fun HardwareKeyboardCandidateBar(
                             val isActive = index == highlightIndex
                             val label = (index + 1) % 10
                             val labelText = if (index == 9) "0" else "$label"
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .clickable(enabled = onCandidateClick != null) {
+                                        onCandidateClick?.invoke(index)
+                                    }
+                            ) {
                                 Text(
                                     text = "$labelText $candidate",
                                     fontSize = 15.sp,
@@ -166,10 +207,26 @@ fun HardwareKeyboardCandidateBar(
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         if (hasPrevPage) {
-                            Text("◀", fontSize = 10.sp, color = candidateTextColor.copy(alpha = 0.5f))
+                            Text(
+                                "◀",
+                                fontSize = 12.sp,
+                                color = candidateTextColor.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .clickable(enabled = onPrevPage != null) { onPrevPage?.invoke() }
+                                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                            )
                         }
                         if (hasNextPage) {
-                            Text("▶", fontSize = 10.sp, color = candidateTextColor.copy(alpha = 0.5f))
+                            Text(
+                                "▶",
+                                fontSize = 12.sp,
+                                color = candidateTextColor.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .clickable(enabled = onNextPage != null) { onNextPage?.invoke() }
+                                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                            )
                         }
                     }
                 }
