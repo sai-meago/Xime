@@ -51,12 +51,13 @@ android {
         applicationId = "com.kingzcheung.xime"
         minSdk = 28
         targetSdk = 35
-        versionCode = 20261111
+        versionCode = 20261114
         versionName = "3.5.0-alpha.6-key2-v2-arm64"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // NDK 配置
         // NDK 配置：架构由 splits.abi 统一控制（Key2 专用 arm64-v8a）。
         // 注意：此处若再设 abiFilters 会与 splits.abi 冲突（Gradle 校验报错），故留空。
 
@@ -153,7 +154,7 @@ android {
         checkDependencies = true
     }
 
-    // 分架构打包（Key2 专用：仅 arm64-v8a）
+    // 分架构打包
     splits {
         abi {
             isEnable = true

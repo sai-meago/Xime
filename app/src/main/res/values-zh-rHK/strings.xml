@@ -532,11 +532,9 @@
     <string name="s_jietu">截圖</string>
     <string name="s_bujuyuxianshi">佈局與顯示</string>
     <string name="s_jianpanbuju">鍵盤佈局</string>
-    <string name="s_qwerty_letter_size">26 鍵字母字級（%1$d%%）</string>
+    <string name="s_qwerty_letter_size">字母鍵字級</string>
     <string name="s_shitijianpanjiance">實體鍵盤檢測</string>
     <string name="s_guanbihoubujianceshitijianpan_6aaf1">關閉後不檢測實體鍵盤，始終使用螢幕鍵盤</string>
-    <string name="s_wulijianpanhouxulantiedi">物理鍵盤候選欄貼底顯示</string>
-    <string name="s_kaiqihouhouxulan_guding_dibu">開啟後候選欄固定在螢幕底部可觸屏點選，關閉則跟隨游標位置顯示</string>
     <string name="s_hengpingshiyongfentijianpan">橫向使用分體鍵盤</string>
     <string name="s_guanbihou_hengpingjiangxianshi_e98c9">關閉後，橫向將顯示連續的完整鍵盤佈局</string>
     <string name="s_jianpantiedixianshi">鍵盤貼底顯示</string>
@@ -1146,4 +1144,6 @@
 
     <string name="s_weiqidong">未啟動</string>
     <string name="s_weilianjiedaoshebei">未連線到裝置</string>
+    <string name="s_wulijianpanhouxulantiedi">物理鍵盤候選欄貼底顯示</string>
+    <string name="s_kaiqihouhouxulan_guding_dibu">開啟後候選欄固定在螢幕底部可觸屏點選，關閉則跟隨游標位置顯示</string>
 </resources>

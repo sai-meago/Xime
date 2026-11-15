@@ -532,11 +532,9 @@
     <string name="s_jietu">截图</string>
     <string name="s_bujuyuxianshi">布局与显示</string>
     <string name="s_jianpanbuju">键盘布局</string>
-    <string name="s_qwerty_letter_size">26 键字母字号（%1$d%%）</string>
+    <string name="s_qwerty_letter_size">字母键字号</string>
     <string name="s_shitijianpanjiance">实体键盘检测</string>
     <string name="s_guanbihoubujianceshitijianpan_6aaf1">关闭后不检测实体键盘，始终使用屏幕键盘</string>
-    <string name="s_wulijianpanhouxulantiedi">物理键盘候选栏贴底显示</string>
-    <string name="s_kaiqihouhouxulan_guding_dibu">开启后候选栏固定在屏幕底部可触屏点选，关闭则跟随光标位置显示</string>
     <string name="s_hengpingshiyongfentijianpan">横屏使用分体键盘</string>
     <string name="s_guanbihou_hengpingjiangxianshi_e98c9">关闭后，横屏将显示连续的完整键盘布局</string>
     <string name="s_jianpantiedixianshi">键盘贴底显示</string>
@@ -1147,4 +1145,6 @@
 
     <string name="s_weiqidong">未启动</string>
     <string name="s_weilianjiedaoshebei">未连接到设备</string>
+    <string name="s_wulijianpanhouxulantiedi">物理键盘候选栏贴底显示</string>
+    <string name="s_kaiqihouhouxulan_guding_dibu">开启后候选栏固定在屏幕底部可触屏点选，关闭则跟随光标位置显示</string>
 </resources>
