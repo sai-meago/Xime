@@ -310,14 +310,14 @@ tasks.configureEach {
             if (!base.isDirectory) return@doLast
             base.walkTopDown().forEach { dir ->
                 if (!dir.isDirectory) return@forEach
-                val rime = java.io.File(dir, "rime")
+                val rime = dir.resolve("rime")
                 if (!rime.isDirectory) return@forEach
                 listOf(
                     "wubi98.dict.yaml", "wubi98.schema.yaml",
                     "wubi86_trad.schema.yaml", "wubi86_trad_pinyin.schema.yaml",
                     "handwriting.schema.yaml", "numbers.schema.yaml", "t9_pinyin.schema.yaml",
-                ).forEach { name -> java.io.File(rime, name).delete() }
-                val opencc = java.io.File(rime, "opencc")
+                ).forEach { name -> rime.resolve(name).delete() }
+                val opencc = rime.resolve("opencc")
                 if (opencc.isDirectory) opencc.deleteRecursively()
             }
         }
