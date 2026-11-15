@@ -52,7 +52,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = 20261115
-        versionName = "3.5.0-alpha.9-key2-v5-arm64"
+        versionName = "3.5.0-alpha.10-key2-v6-arm64"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -95,10 +95,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 只在本地有 keystore.properties 时才使用签名配置
-            // GitHub Actions 使用自己的签名方式
+            // 只在本地有 keystore.properties 时才使用正式签名配置
+            // GitHub Actions / fork 无密钥时回退用 debug 签名，保证 release 产物可安装（配合 CI 云编译）
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }

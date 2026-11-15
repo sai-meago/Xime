@@ -125,17 +125,19 @@ jobs:
         # 否则 P2pNative.loaded=false，设备互联整页是空的。
         run: bash scripts/build-p2p-android.sh
 
-      - name: Build Debug APKs
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build APKs (debug + R8 release)
+        # release 变体做 R8 压缩瘦身；fork 无 keystore.properties 时按 build.gradle 回退 debug 签名，保证可安装
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
 
       - name: Build Plugin XIPKs
         run: bash scripts/build-plugins.sh
 
-      - name: Upload Debug APKs
+      - name: Upload APKs (debug + release)
         uses: actions/upload-artifact@v7
         with:
-          name: debug-apks
+          name: apks
           path: |
             app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
             build/plugin-release/*.xipk
           retention-days: 7
