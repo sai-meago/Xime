@@ -840,13 +840,29 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
             val candState = service.candidateState.value
             service.calculatorEngine.clear()
             updateCalculatorCandidates()
-            if (candState.isComposing) {
-                commitComposingInput(candState, state.currentSchemaId)
-            } else {
+            // 场景②：打字过程中按 Alt+字母，若候选栏已有候选词，优先把首个候选词上屏，
+            // 再输出该字母的 Alt 层副字符（如 Alt+N → "你好"上屏 + ","）。与候选上屏路径
+            // 一致用 rimeEngine.selectCandidate(0)+commit()，避免编码悬挂。
+            if (candState.candidates.isNotEmpty()) {
+                val committed = if (service.rimeEngine.selectCandidate(0)) {
+                    service.rimeEngine.commit()
+                } else {
+                    ""
+                }
                 service.rimeEngine.clearComposition()
+                // 候选上屏后同步清空 UI 候选态（引擎已清组合，这里清展示层），再上屏副字符
+                resetEnterLikeCandidates(state.currentSchemaId)
+                // 副字符在上屏候选后提交，二者连续上屏（净光标位移=候选长度+1）
+                withContext(Dispatchers.Main) { service.commitText(committed + ch) }
+            } else {
+                if (candState.isComposing) {
+                    commitComposingInput(candState, state.currentSchemaId)
+                } else {
+                    service.rimeEngine.clearComposition()
+                }
+                resetEnterLikeCandidates(state.currentSchemaId)
+                withContext(Dispatchers.Main) { service.commitText(ch.toString()) }
             }
-            resetEnterLikeCandidates(state.currentSchemaId)
-            withContext(Dispatchers.Main) { service.commitText(ch.toString()) }
         }
     }
 

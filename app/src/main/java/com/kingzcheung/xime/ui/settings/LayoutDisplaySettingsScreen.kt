@@ -218,10 +218,10 @@ fun LayoutDisplaySettingsContent(
                                 context, candidateTextSize.roundToInt()
                             )
                         },
-                        valueRange = 12f..22f,
-                        steps = 9,
+                        valueRange = 12f..40f,
+                        steps = 27,
                         rangeStartLabel = "12sp",
-                        rangeEndLabel = "22sp",
+                        rangeEndLabel = "40sp",
                         footer = {
                             // 只变字号：候选数与注释固定，避免看不出是本项还是别项在起作用
                             CandidateLinePreview(

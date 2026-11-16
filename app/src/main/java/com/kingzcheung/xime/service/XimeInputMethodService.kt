@@ -2188,10 +2188,14 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         // 不下发锁定位的机型兜底，见 onKeyUp）。Alt+功能键（退格/回车/方向键，无字符）
         // 与 Ctrl+Alt 系列放行原逻辑。掩码以数值判断：META_ALT_LOCKED 常量在部分
         // SDK stub 下不可见（编译期 Unresolved）。
-        val altActive = e.isAltPressed || (e.metaState and 0x200) != 0 || hwAltLockOn
+        val altActive = e.isAltPressed || (e.metaState and 0x200) != 0 || hwAltLockOn || hwAltArmOnce
         if (altActive && !e.isCtrlPressed) {
             val ch = e.getUnicodeChar(e.metaState or KeyEvent.META_ALT_ON)
             if (ch != 0) {
+                // 按住 Alt 组合（isAltPressed）真实消费了副字符：标记，松开时不进入单次待命
+                if (e.isAltPressed) hwAltComboConsumed = true
+                // 单次待命（单击 Alt 后下一个字母）只消费一次，立即熄灭
+                if (hwAltArmOnce) hwAltArmOnce = false
                 keyRouter.handleHardwareAltChar(ch.toChar())
                 return true
             }
@@ -2258,12 +2262,28 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         // 与系统级锁定位（metaState 0x200，见 onKeyDown）并存，两种来源任一生效即可。
         if (keyCode == KeyEvent.KEYCODE_ALT_LEFT || keyCode == KeyEvent.KEYCODE_ALT_RIGHT) {
             val now = event?.eventTime ?: 0L
+            // 本按下周期是否属于「按住 Alt 组合」（如 Alt+字母）——是则松开算组合收尾，
+            // 不进入单次待命；只有单独点按 Alt（无组合消费）才进入单次待命。
+            val wasCombo = hwAltComboConsumed
+            hwAltComboConsumed = false
             if (now - hwLastAltUpAt in 1..350) {
+                // 双击 Alt：进入/退出持续软锁定
                 hwAltLockOn = !hwAltLockOn
                 hwLastAltUpAt = 0L
+                // 双击不复位单次待命：若双击前处于单击待命态，用户应是连按出符号
             } else {
-                if (hwAltLockOn) hwAltLockOn = false
-                hwLastAltUpAt = now
+                if (hwAltLockOn) {
+                    // 锁定中单击 Alt → 解除锁定（沿用原有语义）
+                    hwAltLockOn = false
+                    hwLastAltUpAt = now
+                } else if (!wasCombo) {
+                    // 纯点按 Alt（非双击、非锁定、非组合）→ 进入单次待命：仅对下一个字母生效
+                    hwAltArmOnce = true
+                    hwLastAltUpAt = now
+                } else {
+                    // 按住 Alt 组合收尾：不进待命，仅更新抬起时间
+                    hwLastAltUpAt = now
+                }
             }
             return true
         }
@@ -2555,6 +2575,8 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
         // 硬件键盘会话态复位：Alt 软锁定与临时符号面板不跨输入会话存活
         hwAltLockOn = false
+        hwAltArmOnce = false
+        hwAltComboConsumed = false
         hwLastAltUpAt = 0L
         if (uiState.value.hwSymbolPanel) {
             uiState.value = uiState.value.copy(hwSymbolPanel = false)
@@ -2568,6 +2590,14 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
     /** 硬件 Alt 软锁定（双击 Alt 开启键帽副字符模式；Key2 等机型驱动不下发 META_ALT_LOCKED 的兜底）。 */
     private var hwAltLockOn = false
+
+    /** 硬件 Alt 单次待命：单击 Alt（非双击、非按住组合）后，仅对下一个字母按键生效一次，
+     *  输出该键帽 Alt 层副字符后自动熄灭（不进入持续锁定）。与双击软锁 hwAltLockOn 独立。 */
+    private var hwAltArmOnce = false
+
+    /** 按住 Alt 组合是否已消费过按键（Alt+字母输出副字符等）：用于 onKeyUp 区分「点按待命」与
+     *  「按住组合」，避免按住 Alt 打字母松开时被误判为单击待命而污染下一个字母。 */
+    private var hwAltComboConsumed = false
 
     /** 上一次物理 Alt 抬起时间（eventTime），用于双击判定。 */
     private var hwLastAltUpAt = 0L
@@ -3063,6 +3093,8 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     override fun onDestroy() {
         super.onDestroy()
         hwAltLockOn = false
+        hwAltArmOnce = false
+        hwAltComboConsumed = false
         hwCandidateCardBounds = null
         sharedPrefsListener?.let {
             SettingsPreferences.getPrefsPublic(this).unregisterOnSharedPreferenceChangeListener(it)
