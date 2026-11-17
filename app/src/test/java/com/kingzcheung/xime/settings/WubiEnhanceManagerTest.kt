@@ -52,14 +52,18 @@ class WubiEnhanceManagerTest {
         assertTrue("wubi86 在适用列表", "wubi86" in result.appliedSchemas)
     }
 
-    @Test
-    fun `auto select off drops max_code_length`() {
+@Test
+    fun `long sentence writes enable_sentence and forces four-code off`() {
         val dir = rimeDir()
-        install(dir, "wubi86")
-        reconcile(dir, setOf("wubi86"), autoSelect = false)
-        val text = File(dir, "wubi86.custom.yaml").readText()
-        assertTrue(text.contains("\"speller/auto_select\": false"))
-        assertFalse(text.contains("max_code_length"))
+        install(dir, "wubi98")
+        // 四码上屏默认开，长句开启时应强制关闭（避免四码一到就上屏、句子组不起来）
+        reconcile(dir, setOf("wubi98"), autoSelect = true, longSentence = true)
+        val text = File(dir, "wubi98.custom.yaml").readText()
+        assertTrue(text.contains("\"translator/enable_sentence\": true"))
+        assertTrue(text.contains("\"translator/max_phrase_length\": 20"))
+        assertTrue("长句下四码必须关", text.contains("\"speller/auto_select\": false"))
+        // 长句下解除 schema 自带 4 码上限（写 0），否则满 4 码仍截断无法组句
+        assertTrue("长句下应解除码长上限", text.contains("\"speller/max_code_length\": 0"))
     }
 
     @Test
@@ -88,7 +92,8 @@ class WubiEnhanceManagerTest {
         assertTrue(text.contains("\"translator/enable_sentence\": true"))
         assertTrue(text.contains("\"translator/max_phrase_length\": 20"))
         assertTrue("长句下四码必须关", text.contains("\"speller/auto_select\": false"))
-        assertFalse("长句下不再设定长码", text.contains("max_code_length"))
+        // 长句下解除 schema 自带 4 码上限（写 0），否则满 4 码仍截断无法组句
+        assertTrue("长句下应解除码长上限", text.contains("\"speller/max_code_length\": 0"))
     }
 
     @Test

@@ -225,7 +225,8 @@ object WubiEnhanceManager {
         buildString {
             append(BEGIN).append('\n')
             // 长句连打需连续编码组句；四码自动上屏/定长会掐断组句，二者互斥——
-            // 开启长句时强制关闭四码上屏（并去掉 max_code_length 上限）。
+            // 开启长句时强制关闭四码上屏（并把 max_code_length 解除为 0，避免 schema
+            // 自带 max_code_length: 4 仍在满 4 码截断长句）。
             val fourCode = spec.autoSelect && !spec.longSentence
             if (fourCode) {
                 append("  \"speller/auto_select\": true\n")
@@ -234,6 +235,8 @@ object WubiEnhanceManager {
             } else {
                 append("  \"speller/auto_select\": false\n")
                 append("  \"speller/auto_select_unique_candidate\": false\n")
+                // 长句/非四码模式：解除方案自带的 4 码上限，允许连续编码组句
+                append("  \"speller/max_code_length\": 0\n")
             }
             if (spec.longSentence) {
                 append("  \"translator/enable_sentence\": true\n")
