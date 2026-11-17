@@ -46,6 +46,8 @@ fun HardwareKeyboardCandidateBar(
     inputText: String,
     preeditText: String,
     candidates: List<String>,
+    /** 候选注释（如五笔编码/Z键反查编码），长度与 candidates 对齐；空列表则不渲染注释。 */
+    candidateComments: List<String> = emptyList(),
     hasNextPage: Boolean,
     hasPrevPage: Boolean,
     cursorX: Int,
@@ -188,14 +190,28 @@ fun HardwareKeyboardCandidateBar(
                                         onCandidateClick?.invoke(index)
                                     }
                             ) {
-                                Text(
-                                    text = "$labelText $candidate",
-                                    fontSize = candidateTextSize.sp,
-                                    color = if (isActive) selectedTextColor else candidateTextColor,
-                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                                    maxLines = 1,
-                                    fontFamily = AppFonts.candidateFontFamily
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "$labelText $candidate",
+                                        fontSize = candidateTextSize.sp,
+                                        color = if (isActive) selectedTextColor else candidateTextColor,
+                                        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                        maxLines = 1,
+                                        fontFamily = AppFonts.candidateFontFamily
+                                    )
+                                    if (index < candidateComments.size) {
+                                        val comment = candidateComments[index]
+                                        if (comment.isNotBlank()) {
+                                            Text(
+                                                text = comment,
+                                                fontSize = (candidateTextSize - 4).coerceAtLeast(9).sp,
+                                                color = candidateTextColor.copy(alpha = 0.6f),
+                                                maxLines = 1,
+                                                fontFamily = AppFonts.commentFontFamily
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

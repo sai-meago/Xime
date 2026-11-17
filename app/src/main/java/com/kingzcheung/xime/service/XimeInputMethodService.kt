@@ -1768,6 +1768,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                         text
                                     }
                                 },
+                                candidateComments = if (cand.isShowingRecentClipboard) emptyList() else cand.candidateComments,
                                 hasNextPage = cand.hasNextPage,
                                 hasPrevPage = cand.hasPrevPage,
                                 cursorX = state.cursorX,
