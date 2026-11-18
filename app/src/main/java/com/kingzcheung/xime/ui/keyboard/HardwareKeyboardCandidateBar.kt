@@ -6,7 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -175,9 +176,14 @@ fun HardwareKeyboardCandidateBar(
                 }
 
                 if (candidates.isNotEmpty()) {
-                    FlowRow(
+                    // 单行横向滚动：候选词不自动换行（长词/数量多时可横滑），
+                    // 首位候选始终固定在最左，避免换行把首个候选挤到下一行影响选字。
+                    val hScrollState = rememberScrollState()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(hScrollState),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         candidates.take(pageSize.coerceIn(1, 30)).forEachIndexed { index, candidate ->
                             val isActive = index == highlightIndex

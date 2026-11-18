@@ -59,6 +59,8 @@ data class InputUIState(
     val isCompact: Boolean = false,
     /** 物理键盘紧凑模式下由 Sym 键临时展开的屏幕键盘（符号面板）。 */
     val hwSymbolPanel: Boolean = false,
+    /** 物理键盘 Alt 锁定状态（双击软锁定/系统锁定位开启时）：顶部状态栏指示。 */
+    val hwAltLocked: Boolean = false,
     val isFloatingMode: Boolean = false,
     val floatingOffsetX: Int = 0,
     val floatingOffsetY: Int = 0,

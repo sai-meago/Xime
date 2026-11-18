@@ -834,12 +834,15 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
      * 存在未上屏编码时先按回车语义上屏原始编码（与 commitComposingInput 一致），
      * 避免编码悬挂在候选栏；随后提交 Alt 字符并清空候选态。
      */
-    internal fun handleHardwareAltChar(ch: Char) {
+internal fun handleHardwareAltChar(ch: Char) {
         postRimeJob {
             val state = service.uiState.value
             val candState = service.candidateState.value
             service.calculatorEngine.clear()
             updateCalculatorCandidates()
+            // ④ 中英文标点：英文模式用半角、中文模式用全角（Alt+字母 上屏的键帽标点符号）。
+            // 仅当 Alt 层是标点符号时做全角转换，字母/数字/功能副字符保持原样。
+            val outputChar = if (state.isAsciiMode) ch else toFullWidthPunct(ch)
             // 场景②：打字过程中按 Alt+字母，若候选栏已有候选词，优先把首个候选词上屏，
             // 再输出该字母的 Alt 层副字符（如 Alt+N → "你好"上屏 + ","）。与候选上屏路径
             // 一致用 rimeEngine.selectCandidate(0)+commit()，避免编码悬挂。
@@ -849,6 +852,58 @@ internal class ImeKeyRouter(private val service: XimeInputMethodService) {
                 } else {
                     ""
                 }
+                service.rimeEngine.clearComposition()
+                // 候选上屏后同步清空 UI 候选态（引擎已清组合，这里清展示层），再上屏副字符
+                resetEnterLikeCandidates(state.currentSchemaId)
+                // 副字符在上屏候选后提交，二者连续上屏（净光标位移=候选长度+1）
+                withContext(Dispatchers.Main) { service.commitText(committed + outputChar) }
+            } else {
+                if (candState.isComposing) {
+                    commitComposingInput(candState, state.currentSchemaId)
+                } else {
+                    service.rimeEngine.clearComposition()
+                }
+                resetEnterLikeCandidates(state.currentSchemaId)
+                withContext(Dispatchers.Main) { service.commitText(outputChar.toString()) }
+            }
+        }
+    }
+
+    /** 把 Alt 层的半角标点映射为全角（中文标点）；非标点返回原字符。 */
+    private fun toFullWidthPunct(ch: Char): Char = when (ch) {
+        ',' -> '，'
+        '.' -> '。'
+        '?' -> '？'
+        '!' -> '！'
+        ';' -> '；'
+        ':' -> '：'
+        '(' -> '（'
+        ')' -> '）'
+        '[' -> '【'
+        ']' -> '】'
+        '{' -> '｛'
+        '}' -> '｝'
+        '<' -> '《'
+        '>' -> '》'
+        '"' -> '“'
+        '\'' -> '‘'
+        '`' -> '‘'
+        '/' -> '、'
+        '\\' -> '、'
+        '+' -> '＋'
+        '=' -> '＝'
+        '-' -> '－'
+        '_' -> '\uFF3F'
+        '~' -> '～'
+        '^' -> '＾'
+        '@' -> '＠'
+        '#' -> '＃'
+        '$' -> '＄'
+        '%' -> '％'
+        '&' -> '＆'
+        '*' -> '＊'
+        else -> ch
+    }
                 service.rimeEngine.clearComposition()
                 // 候选上屏后同步清空 UI 候选态（引擎已清组合，这里清展示层），再上屏副字符
                 resetEnterLikeCandidates(state.currentSchemaId)

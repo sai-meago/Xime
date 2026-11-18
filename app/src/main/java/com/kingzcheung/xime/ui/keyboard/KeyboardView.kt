@@ -117,6 +117,8 @@ fun KeyboardView(
      * 此处只覆盖没有经过按键回调链路的点击交互，宿主按按键振动同款语义实现。
      */
     onHapticFeedback: (() -> Unit)? = null,
+    /** 物理键盘 Alt 锁定状态（双击软锁定开启），用于顶部状态栏指示。 */
+    hwAltLocked: Boolean = false,
 ) {
     val isShifted by viewModel.isShifted.collectAsStateWithLifecycle()
     val keyboardState by viewModel.keyboardState.collectAsStateWithLifecycle()
@@ -428,6 +430,13 @@ fun KeyboardView(
             }
 
             val toolbarContext = LocalContext.current
+            // 顶部状态栏：方案 / 中英 / Alt 锁定 / 键盘显示状态
+            TopStatusBar(
+                schemaName = state.schemaName,
+                isAsciiMode = state.isAsciiMode,
+                hwAltLocked = hwAltLocked,
+                keyboardState = keyboardState,
+            )
             CandidateBar(
                 state = candidateBarState,
                 page = page,
@@ -1627,4 +1636,56 @@ private fun KeyboardViewModel.consumeShiftKey(key: String): Boolean = when (key)
         doubleTapShift(); true
     }
     else -> false
+}
+
+/** 顶部状态栏：方案 / 中英 / Alt 锁定 / 键盘显示状态（紧凑横条，不遮挡候选栏）。 */
+@Composable
+private fun TopStatusBar(
+    schemaName: String,
+    isAsciiMode: Boolean,
+    hwAltLocked: Boolean,
+    keyboardState: KeyboardLayoutState,
+) {
+    val kbLabel = when (keyboardState) {
+        is KeyboardLayoutState.English -> "英文"
+        is KeyboardLayoutState.Number -> "数字"
+        is KeyboardLayoutState.CommonSymbol -> "符号"
+        else -> if (isAsciiMode) "英文" else "中文"
+    }
+    val altLabel = if (hwAltLocked) "ALT●" else "ALT○"
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = schemaName.ifBlank { "—" },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            maxLines = 1,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = if (isAsciiMode) "英" else "中",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isAsciiMode) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                else MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+            )
+            Text(
+                text = altLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (hwAltLocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                maxLines = 1,
+            )
+            Text(
+                text = kbLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                maxLines = 1,
+            )
+        }
+    }
 }

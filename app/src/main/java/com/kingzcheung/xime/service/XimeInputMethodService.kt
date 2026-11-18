@@ -1928,6 +1928,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                 // 非按键交互（符号/表情面板、菜单栏、候选栏按钮）的振动，
                                 // 语义与按键按下反馈完全一致（模式/时长/振幅走同一配置）
                                 onHapticFeedback = { feedbackManager.hapticFeedback(hapticView) },
+                                hwAltLocked = uiState.value.hwAltLocked,
                                 onCardPositioned = { left: Int, top: Int, right: Int, bottom: Int ->
                                     val cardHeightPx = bottom - top
                                     if (cardHeightPx > 0) {
@@ -2286,6 +2287,8 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                     hwLastAltUpAt = now
                 }
             }
+            // 顶部状态栏同步 Alt 锁定状态
+            uiState.value = uiState.value.copy(hwAltLocked = hwAltLockOn)
             return true
         }
         // 物理 Shift 单击（按下到抬起间无其他按键）切换中英文，与 PC 中文输入法习惯一致；
@@ -2579,6 +2582,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         hwAltArmOnce = false
         hwAltComboConsumed = false
         hwLastAltUpAt = 0L
+        uiState.value = uiState.value.copy(hwAltLocked = false)
         if (uiState.value.hwSymbolPanel) {
             uiState.value = uiState.value.copy(hwSymbolPanel = false)
         }

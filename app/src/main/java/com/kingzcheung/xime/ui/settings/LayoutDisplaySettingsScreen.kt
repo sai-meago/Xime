@@ -305,8 +305,8 @@ fun LayoutDisplaySettingsContent(
                         onValueChangeFinished = {
                             SettingsPreferences.setPageSize(context, pageSize.roundToInt())
                         },
-                        valueRange = 5f..50f,
-                        steps = 44,
+                        valueRange = 1f..50f,
+                        steps = 48,
                         subtitle = tr(R.string.s_xiugaihouxudaofanganshezhizhon_603c8),
                         footer = {
                             // 只变数量：字号固定 18sp
