@@ -904,22 +904,6 @@ internal fun handleHardwareAltChar(ch: Char) {
         '*' -> '＊'
         else -> ch
     }
-                service.rimeEngine.clearComposition()
-                // 候选上屏后同步清空 UI 候选态（引擎已清组合，这里清展示层），再上屏副字符
-                resetEnterLikeCandidates(state.currentSchemaId)
-                // 副字符在上屏候选后提交，二者连续上屏（净光标位移=候选长度+1）
-                withContext(Dispatchers.Main) { service.commitText(committed + ch) }
-            } else {
-                if (candState.isComposing) {
-                    commitComposingInput(candState, state.currentSchemaId)
-                } else {
-                    service.rimeEngine.clearComposition()
-                }
-                resetEnterLikeCandidates(state.currentSchemaId)
-                withContext(Dispatchers.Main) { service.commitText(ch.toString()) }
-            }
-        }
-    }
 
     /**
      * ascii 切换统一分发（key-processing 协程内执行）。
