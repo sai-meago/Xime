@@ -50,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -145,6 +146,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -300,6 +302,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
     
     internal val mainHandler = Handler(Looper.getMainLooper())
+
+    /** 系统状态栏常驻通知：显示当前方案 / 中英 / Alt 锁定状态。 */
+    private lateinit var statusNotificationManager: StatusNotificationManager
     
     internal val uiState = mutableStateOf(InputUIState())
     /** 悬浮键盘拖到底部"松手切换非悬浮"的提示态：拖动回调边沿写入（进入时震动一次），
@@ -720,7 +725,22 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         
         loadDarkModePreference()
         registerSharedPrefsListener()
-        
+
+        // 系统状态栏常驻通知：显示当前方案 / 中英 / Alt 锁定状态。
+        // 监听 uiState 变化（snapshotFlow），仅在状态变化时刷新通知，避免频繁 notify。
+        statusNotificationManager = StatusNotificationManager(this)
+        serviceScope.launch(Dispatchers.Main) {
+            snapshotFlow {
+                Triple(
+                    uiState.value.schemaName,
+                    uiState.value.isAsciiMode,
+                    uiState.value.hwAltLocked,
+                )
+            }.distinctUntilChanged().collect { (schema, ascii, altLocked) ->
+                statusNotificationManager.update(schema, ascii, altLocked)
+            }
+        }
+
         initRimeEngine()
         
         serviceScope.launch(Dispatchers.IO) {
@@ -3117,6 +3137,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         com.kingzcheung.xime.handwriting.HandwritingEngine.release()
         ExtensionManager.release()
         com.kingzcheung.xime.association.NativeOnnxEngine.releaseSharedEnv()
+        if (::statusNotificationManager.isInitialized) {
+            statusNotificationManager.cancel()
+        }
         serviceScope.cancel()
         keyProcessingDispatcher.close()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)

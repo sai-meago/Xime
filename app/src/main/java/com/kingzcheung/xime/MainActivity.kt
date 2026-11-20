@@ -88,6 +88,22 @@ class MainActivity : ComponentActivity() {
         }
         finish()
     }
+
+    // 系统状态栏常驻通知权限（Android 13+ 需运行时授权）
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* 结果无需处理：授权后输入法服务会自动刷新通知 */ }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     
     private val prewarmScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     
@@ -109,6 +125,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         prewarmRimeEngine()
+
+        requestNotificationPermissionIfNeeded()
 
         handleSharedIntent(intent)
         
