@@ -22,6 +22,26 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+
+      - name: Write keystore.properties for fixed release signing
+        # 若仓库配置了 KEYSTORE_B64 / KEYSTORE_PWD 两个 secret，则用固定签名构建 release，
+        # 保证每次升级签名一致、可直接覆盖安装；未配置时跳过，回退 build.gradle 的 debug 签名。
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_B64 }}
+          KS_PWD: ${{ secrets.KEYSTORE_PWD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            cat > app/keystore.properties <<EOF
+          keyBase64=$KS_B64
+          storePassword=$KS_PWD
+          keyAlias=ximekey
+          keyPassword=$KS_PWD
+          EOF
+            echo "keystore.properties written (fixed signing enabled)"
+          else
+            echo "no KEYSTORE_B64 secret; fallback to debug signing"
+          fi
+
         
       - name: Set up JDK 17
         uses: actions/setup-java@v6
@@ -125,28 +145,9 @@ jobs:
         # 否则 P2pNative.loaded=false，设备互联整页是空的。
         run: bash scripts/build-p2p-android.sh
 
-      - name: Write keystore.properties for fixed release signing
-        # 若仓库配置了 KEYSTORE_B64 / KEYSTORE_PWD 两个 secret，则用固定签名构建 release，
-        # 保证每次升级签名一致、可直接覆盖安装；未配置时跳过，回退 build.gradle 的 debug 签名。
-        env:
-          KS_B64: ${{ secrets.KEYSTORE_B64 }}
-          KS_PWD: ${{ secrets.KEYSTORE_PWD }}
-        run: |
-          if [ -n "$KS_B64" ]; then
-            cat > app/keystore.properties <<EOF
-          keyBase64=$KS_B64
-          storePassword=$KS_PWD
-          keyAlias=ximekey
-          keyPassword=$KS_PWD
-          EOF
-            echo "keystore.properties written (fixed signing enabled)"
-          else
-            echo "no KEYSTORE_B64 secret; fallback to debug signing"
-          fi
-
       - name: Build APKs (debug + R8 release)
         # release 变体做 R8 压缩瘦身；fork 无 keystore.properties 时按 build.gradle 回退 debug 签名，保证可安装
-        run: ./gradlew assembleDebug assembleRelease --no-daemon
+        run: ./gradlew assembleDebug assembleRelease --no-daemon --no-configuration-cache
 
       - name: Build Plugin XIPKs
         run: bash scripts/build-plugins.sh
