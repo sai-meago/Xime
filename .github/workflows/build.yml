@@ -24,25 +24,25 @@ jobs:
           fetch-depth: 0
 
       - name: Write keystore.properties for fixed release signing
-        # 若仓库配置了 KEYSTORE_B64 / KEYSTORE_PWD 两个 secret，则用固定签名构建 release，
-        # 保证每次升级签名一致、可直接覆盖安装；未配置时跳过，回退 build.gradle 的 debug 签名。
+        # 用固定签名构建 release，保证每次升级签名一致、可覆盖安装；未配置时回退 debug 签名。
         env:
           KS_B64: ${{ secrets.KEYSTORE_B64 }}
           KS_PWD: ${{ secrets.KEYSTORE_PWD }}
         run: |
           if [ -n "$KS_B64" ]; then
+            printf '%s' "$KS_B64" | base64 -d > "$GITHUB_WORKSPACE/release-signing.jks"
             cat > app/keystore.properties <<EOF
-          keyBase64=$KS_B64
+          storeFile=$GITHUB_WORKSPACE/release-signing.jks
           storePassword=$KS_PWD
           keyAlias=ximekey
           keyPassword=$KS_PWD
           EOF
             echo "keystore.properties written (fixed signing enabled)"
+            ls -l "$GITHUB_WORKSPACE/release-signing.jks"
           else
             echo "no KEYSTORE_B64 secret; fallback to debug signing"
           fi
 
-        
       - name: Set up JDK 17
         uses: actions/setup-java@v6
         with:
