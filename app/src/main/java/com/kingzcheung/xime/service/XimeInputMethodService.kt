@@ -1773,7 +1773,9 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                         val selectedTextCol = com.kingzcheung.xime.ui.theme.KeyboardThemes.getCandidateSelectedTextColor(state.themeId, isDark)
                         val keyboardBgColor = cardBg
                         val rootTheme = com.kingzcheung.xime.ui.theme.KeyboardThemes.getThemeById(state.themeId)
-                        if (state.isCompact && !state.hwSymbolPanel && (cand.candidates.isNotEmpty() || cand.isShowingRecentClipboard || cand.inputText.isNotEmpty())) {
+                        // 紧凑模式下始终渲染候选卡：即使未输入也显示，用于呈现光标竖线、
+                        // 提示“当前可输入”，避免点击输入框后空白无焦点感（Key2 全键盘体验优化）。
+                        if (state.isCompact && !state.hwSymbolPanel) {
                             HardwareKeyboardCandidateBar(
                                 inputText = cand.inputText,
                                 preeditText = cand.preeditText,
@@ -1807,8 +1809,6 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                 onNextPage = { keyRouter.pageDown() },
                                 onCardBoundsChanged = { rect -> updateHwCandidateCardBounds(rect) },
                             )
-                        } else if (state.isCompact && !state.hwSymbolPanel) {
-                            Box(modifier = Modifier.fillMaxSize())
                         } else {
                         // 非浮动：背景与键盘内容同区域，贴底覆盖键盘内容高度 + 底部导航栏留白，
                         // 键盘内容通过 offset 上移 activeBottomDp 留出导航栏空间（对齐参考实现 bottomPaddingSpace）。

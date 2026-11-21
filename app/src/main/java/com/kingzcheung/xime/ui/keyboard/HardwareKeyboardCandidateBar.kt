@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,10 +75,7 @@ fun HardwareKeyboardCandidateBar(
     /** 卡片窗口坐标矩形上报（onComputeInsets 触摸区）；卡片隐藏时回调 null。 */
     onCardBoundsChanged: ((android.graphics.Rect?) -> Unit)? = null,
 ) {
-    if (candidates.isEmpty() && inputText.isEmpty()) {
-        onCardBoundsChanged?.invoke(null)
-        return
-    }
+    // 空闲（无候选/无编码）时不再隐藏候选卡：保持渲染以显示光标竖线，点击输入框即有焦点反馈。
 
     val density = LocalDensity.current
     val displayText = if (preeditText.isNotEmpty()) preeditText else inputText
@@ -164,15 +163,27 @@ fun HardwareKeyboardCandidateBar(
                     .padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
                     .widthIn(max = maxCardWidthDp.dp - 24.dp)
             ) {
-                if (displayText.isNotEmpty()) {
-                    Text(
-                        text = displayText,
-                        fontSize = (candidateTextSize - 2).coerceAtLeast(11).sp,
-                        color = activeColor,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(bottom = 2.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                ) {
+                    if (displayText.isNotEmpty()) {
+                        Text(
+                            text = displayText,
+                            fontSize = (candidateTextSize - 2).coerceAtLeast(11).sp,
+                            color = activeColor,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    // 光标竖线：无论是否已有编码都显示，提示当前可输入位置（空输入也能看到光标）
+                    Box(
+                        modifier = Modifier
+                            .padding(start = if (displayText.isEmpty()) 0.dp else 3.dp)
+                            .width(2.dp)
+                            .height(22.dp)
+                            .background(activeColor)
                     )
                 }
 

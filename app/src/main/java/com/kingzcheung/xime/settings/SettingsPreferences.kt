@@ -105,7 +105,7 @@ object SettingsPreferences {
 
     /** 物理键盘候选栏贴底显示（false=跟随光标定位）。 */
     fun isHwCandidateBarPinBottom(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, false)
+        getPrefs(context).getBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, true)
 
     fun setHwCandidateBarPinBottom(context: Context, pinned: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, pinned).apply()
@@ -113,7 +113,7 @@ object SettingsPreferences {
 
     /** 五笔四码直接上屏（默认开：与内置 wubi86 方案原行为一致）。 */
     fun isWubiAutoSelect(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_WUBI_AUTO_SELECT, true)
+        getPrefs(context).getBoolean(KEY_WUBI_AUTO_SELECT, false)
 
     fun setWubiAutoSelect(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_WUBI_AUTO_SELECT, enabled).apply()
@@ -121,7 +121,7 @@ object SettingsPreferences {
 
     /** 五笔 Z 键拼音反查（默认关：纯五笔方案追加 reverse_lookup）。 */
     fun isWubiZReverse(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_WUBI_Z_REVERSE, false)
+        getPrefs(context).getBoolean(KEY_WUBI_Z_REVERSE, true)
 
     fun setWubiZReverse(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_WUBI_Z_REVERSE, enabled).apply()
@@ -129,12 +129,35 @@ object SettingsPreferences {
 
     /** 五笔长句连打（默认关：开启 enable_sentence 连续编码组句）。 */
     fun isWubiLongSentence(context: Context): Boolean =
-        getPrefs(context).getBoolean(KEY_WUBI_LONG_SENTENCE, false)
+        getPrefs(context).getBoolean(KEY_WUBI_LONG_SENTENCE, true)
 
     fun setWubiLongSentence(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_WUBI_LONG_SENTENCE, enabled).apply()
     }
     
+    /** Key2 专用默认设置一次性迁移标记（v9 首次启动写入，之后不再覆盖用户改动）。 */
+    private const val KEY_KEY2_DEFAULTS_V9 = "key2_defaults_v9_applied"
+
+    /**
+     * Key2 全键盘默认设置：新装或升级到 v9 首次启动时写入一次。
+     * 长句连打、关四码上屏、Z 键反查、候选注释、每页 3 个、候选字号 24、候选卡贴底。
+     * 写完后置标记，用户后续在设置里改了不会再被覆盖。
+     */
+    fun applyKey2DefaultsV9IfNeeded(context: Context) {
+        val prefs = getPrefs(context)
+        if (prefs.getBoolean(KEY_KEY2_DEFAULTS_V9, false)) return
+        prefs.edit()
+            .putBoolean(KEY_WUBI_LONG_SENTENCE, true)
+            .putBoolean(KEY_WUBI_AUTO_SELECT, false)
+            .putBoolean(KEY_WUBI_Z_REVERSE, true)
+            .putBoolean(KEY_SHOW_CANDIDATE_COMMENTS, true)
+            .putInt(KEY_PAGE_SIZE, 3)
+            .putInt(KEY_CANDIDATE_TEXT_SIZE, 24)
+            .putBoolean(KEY_HW_CANDIDATE_BAR_PIN_BOTTOM, true)
+            .putBoolean(KEY_KEY2_DEFAULTS_V9, true)
+            .apply()
+    }
+
     private const val KEY_LAYOUT_PREFIX = "layout_pref_"
     
     private const val KEY_KEYBOARD_HEIGHT_DP = "keyboard_height_dp"
@@ -166,7 +189,7 @@ object SettingsPreferences {
     const val KEY_QWERTY_LETTER_SIZE_LEVEL = "qwerty_letter_size_level"
     const val INPUT_TEXT_INPUT_BOX = "input_box"
     const val INPUT_TEXT_CANDIDATE_BAR = "candidate_bar"
-    const val DEFAULT_PAGE_SIZE = 20 // 手机候选栏每页候选词数；schema 里的 page_size 来自 PC 版（5），太短，默认用 20
+    const val DEFAULT_PAGE_SIZE = 3
 
     fun isCompactModeEnabled(context: Context): Boolean {
         return getPrefs(context).getBoolean(KEY_COMPACT_MODE, true)
@@ -837,7 +860,7 @@ object SettingsPreferences {
         getPrefs(context).edit().putInt(KEY_PAGE_SIZE, pageSize).apply()
     }
 
-    const val DEFAULT_CANDIDATE_TEXT_SIZE = 19
+    const val DEFAULT_CANDIDATE_TEXT_SIZE = 24
 
     val QWERTY_LETTER_SIZE_LEVELS = -2..2
 

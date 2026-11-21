@@ -73,6 +73,8 @@ class XimeApplication : Application(), ImageLoaderFactory {
         FileLogger.init(this)
         KeyTapLogger.init(this)
         KeyTapLogger.enabled = SettingsPreferences.isKeyTapLogEnabled(this)
+        // Key2 全键盘默认设置：升级到 v9 首次启动写入一次（长句/关四码/Z反查/每页3/字号24/贴底）
+        SettingsPreferences.applyKey2DefaultsV9IfNeeded(this)
         // 邻键误触纠错（librime 插件版）：初始化先验推送器
         CorrectionPriors.init(this)
         CorrectionPriors.enabled = SettingsPreferences.isCorrectorEnabled(this)

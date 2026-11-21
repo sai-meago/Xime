@@ -21,7 +21,7 @@ import com.kingzcheung.xime.R
 class StatusNotificationManager(private val context: Context) {
 
     companion object {
-        private const val CHANNEL_ID = "xime_status_bar"
+        private const val CHANNEL_ID = "xime_status_bar_v2"
         private const val CHANNEL_NAME = "输入法状态栏"
         private const val NOTIFICATION_ID = 0x58494D45 // "XIME"
     }
@@ -37,12 +37,13 @@ class StatusNotificationManager(private val context: Context) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW, // 低优先级：常驻但不发声
+                NotificationManager.IMPORTANCE_DEFAULT, // DEFAULT：状态栏显示小图标（LOW 不显示）
             ).apply {
                 description = "显示当前输入法方案、中英文与 Alt 锁定状态"
                 setShowBadge(false)
                 enableVibration(false)
                 enableLights(false)
+                setSound(null, null) // 静音：响铃震动全关，仅保留状态栏图标 + 下拉可见
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -92,7 +93,7 @@ class StatusNotificationManager(private val context: Context) {
             .setOngoing(true)              // 常驻，不可滑动清除
             .setShowWhen(false)
             .setOnlyAlertOnce(true)        // 更新时不重复提醒
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
