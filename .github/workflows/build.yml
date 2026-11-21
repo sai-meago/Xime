@@ -149,6 +149,29 @@ jobs:
         # release 变体做 R8 压缩瘦身；fork 无 keystore.properties 时按 build.gradle 回退 debug 签名，保证可安装
         run: ./gradlew assembleDebug assembleRelease --no-daemon --no-configuration-cache
 
+      - name: Signing diagnostic (non-fatal)
+        continue-on-error: true
+        run: ./gradlew :app:signingReport --no-daemon --no-configuration-cache
+
+      - name: Re-sign release APK with fixed keystore
+        # AGP 9 旧 DSL 下 signingConfig 未能确定性生效，这里用 apksigner 强制固定签名，确保跨版本一致可覆盖安装。
+        env:
+          KS_PWD: ${{ secrets.KEYSTORE_PWD }}
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/release-signing.jks" ]; then
+            BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+            REL_DIR=app/build/outputs/apk/release
+            APK=$(ls "$REL_DIR"/*.apk | head -1)
+            "$BT/apksigner" sign --ks "$GITHUB_WORKSPACE/release-signing.jks" \
+              --ks-pass "pass:$KS_PWD" --ks-key-alias ximekey --key-pass "pass:$KS_PWD" \
+              --out /tmp/signed.apk "$APK"
+            mv /tmp/signed.apk "$APK"
+            echo "re-signed: $APK"
+            "$BT/apksigner" verify --print-certs "$APK" | head -6
+          else
+            echo "no release-signing.jks; skip re-sign"
+          fi
+
       - name: Build Plugin XIPKs
         run: bash scripts/build-plugins.sh
 
