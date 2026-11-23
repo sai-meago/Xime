@@ -2633,14 +2633,14 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     /** 物理键盘 Sym 键：紧凑模式下开/关屏幕符号面板（面板可见、可触屏点选上屏）。 */
     private fun toggleHwSymbolPanel() {
         val state = uiState.value
-        FileLogger.i(
+        FileLogger.w(
             TAG,
             "toggleHwSymbolPanel: enter, hwSymbolPanel=${state.hwSymbolPanel}, isAsciiMode(ui)=${state.isAsciiMode}, isAsciiMode(rime)=${rimeEngine.isAsciiMode()}, isCompact=${state.isCompact}"
         )
         if (!state.isCompact) {
             // 非紧凑（如已切到软键盘）时 Sym 仅做普通符号面板切换
             keyboardViewModel.dispatch(KeyboardDispatchAction.ShowCommonSymbol)
-            FileLogger.i(TAG, "toggleHwSymbolPanel: non-compact -> ShowCommonSymbol, after rime ascii=${rimeEngine.isAsciiMode()}")
+            FileLogger.w(TAG, "toggleHwSymbolPanel: non-compact -> ShowCommonSymbol, after rime ascii=${rimeEngine.isAsciiMode()}")
             return
         }
         val open = !state.hwSymbolPanel
@@ -2649,7 +2649,7 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
             if (open) KeyboardDispatchAction.ShowCommonSymbol
             else KeyboardDispatchAction.ExitPanel
         )
-        FileLogger.i(
+        FileLogger.w(
             TAG,
             "toggleHwSymbolPanel AFTER dispatch, open=$open, hwSymbolPanel=${uiState.value.hwSymbolPanel}, isAsciiMode(rime)=${rimeEngine.isAsciiMode()}, isAsciiMode(ui)=${uiState.value.isAsciiMode}"
         )

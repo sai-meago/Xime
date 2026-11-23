@@ -272,7 +272,7 @@ class KeyboardViewModel(application: Application) : AndroidViewModel(application
                 Triple(KeyboardViewState.NumberPanel(returnTo), KeyboardPage.Panel(PanelType.NUMBER, returnTo), KeyboardLayoutState.Number)
             }
             is KeyboardDispatchAction.ShowCommonSymbol -> {
-                FileLogger.d("XimeKeyboard", "ShowCommonSymbol: enter, current=$current, isAsciiMode=$isAsciiMode, schemaId=$schemaId")
+                FileLogger.w("XimeKeyboard", "ShowCommonSymbol: enter, current=$current, isAsciiMode=$isAsciiMode, schemaId=$schemaId")
                 val returnTo = when (current) {
                     is KeyboardViewState.NumberPanel -> current.returnTo
                     is KeyboardViewState.CommonSymbolPanel -> current.returnTo
@@ -281,7 +281,7 @@ class KeyboardViewModel(application: Application) : AndroidViewModel(application
                 Triple(KeyboardViewState.CommonSymbolPanel(returnTo), KeyboardPage.Panel(PanelType.COMMON_SYMBOL, returnTo), KeyboardLayoutState.CommonSymbol)
             }
             is KeyboardDispatchAction.ExitPanel -> {
-                FileLogger.d("XimeKeyboard", "ExitPanel: enter, current=$current, isAsciiMode=$isAsciiMode, schemaId=$schemaId")
+                FileLogger.w("XimeKeyboard", "ExitPanel: enter, current=$current, isAsciiMode=$isAsciiMode, schemaId=$schemaId")
                 when (current) {
                     is KeyboardViewState.NumberPanel, is KeyboardViewState.CommonSymbolPanel -> {
                         val returnTo = (current as? KeyboardViewState.NumberPanel)?.returnTo
@@ -289,7 +289,7 @@ class KeyboardViewModel(application: Application) : AndroidViewModel(application
                         val (vs, kb) = when (returnTo) {
                             MainType.FULL -> {
                                 val kb = initialKeyboardLayoutState(isAsciiMode, schemaId)
-                                FileLogger.d("XimeKeyboard", "ExitPanel -> MainType.FULL: isAsciiMode=$isAsciiMode, kb=$kb")
+                                FileLogger.w("XimeKeyboard", "ExitPanel -> MainType.FULL: isAsciiMode=$isAsciiMode, kb=$kb")
                                 val vs = when (kb) {
                                     is KeyboardLayoutState.Chinese -> KeyboardViewState.ChineseFull
                                     is KeyboardLayoutState.English -> KeyboardViewState.EnglishFull
