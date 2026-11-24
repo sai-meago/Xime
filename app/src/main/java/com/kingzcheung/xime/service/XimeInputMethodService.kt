@@ -2225,6 +2225,13 @@ class XimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         }
         // Caps Lock 的 meta state 由系统自动维护，与 Shift 同效（物理键盘大小写切换）
         val isShifted = e.isShiftPressed || e.isCapsLockOn
+        // 符号面板（Sym 打开）下按字母键：说明用户要打字，自动收起符号面板回到全键盘，
+        // 避免"面板打开时字母只能打英文、候选栏也不显示"。输入方案（中文/英文）保持不变。
+        if (hasHardwareKeyboard && uiState.value.hwSymbolPanel &&
+            keyCode in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z
+        ) {
+            toggleHwSymbolPanel()
+        }
         if (hasHardwareKeyboard && candidateState.value.candidates.isNotEmpty()) {
             when (keyCode) {
                 KeyEvent.KEYCODE_DPAD_DOWN -> {

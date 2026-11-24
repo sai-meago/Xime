@@ -106,6 +106,23 @@ class CalculatorModeIntegrationTest {
     }
 
     @Test
+    fun `CommonSymbol键盘_字母键返回NotHandled交Rime管线`() {
+        val engine = CalculatorEngine()
+
+        // 符号面板打开时物理键盘字母仍应按当前输入方案（中文态→编码）处理，
+        // 不得被当作英文字符直接上屏（v9.2 修复：Sym 面板下打不了中文）。
+        for (letter in listOf("a", "z", "A", "Q")) {
+            val result = routeCalculatorKey(letter, false, true, engine)
+            assertTrue(
+                "Letter $letter should NOT be handled on CommonSymbol keyboard",
+                result is CalculatorRouteResult.NotHandled
+            )
+        }
+        assertNull(engine.getCandidate())
+        assertFalse(engine.isActive())
+    }
+
+    @Test
     fun `全键盘_计算器键返回NotHandled交下游管线`() {
         val engine = CalculatorEngine()
 

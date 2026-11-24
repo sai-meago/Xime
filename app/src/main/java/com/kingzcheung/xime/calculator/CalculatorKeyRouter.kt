@@ -2,6 +2,7 @@ package com.kingzcheung.xime.calculator
 
 private val calculatorKeyPattern = Regex("[0-9]")
 private val calculatorKeys = listOf("+", "-", "*", "/", ".")
+private val letterPattern = Regex("[a-zA-Z]")
 
 /**
  * 计算器模式按键路由的结果。
@@ -21,7 +22,9 @@ sealed class CalculatorRouteResult {
  * 返回 [CalculatorRouteResult.NotHandled] 表示调用者应按正常流程继续处理。
  *
  * 路由规则：
- * - CommonSymbol 键盘：所有单字符键直接提交，不经过计算器（符号无计算器支持）
+ * - CommonSymbol 键盘：符号等非字母的单字符键直接提交（符号无计算器支持）；
+ *   **字母键不在此处理**，交回 Rime 管线——实体键盘在符号面板打开时仍应按
+ *   当前方案输入（中文态→编码），而不是被当作英文字符直接上屏。
  * - Number 键盘：数字/运算符/小数点先经计算器引擎，再直接提交（不经过 Rime）
  * - 其他键盘：返回 [NotHandled]
  */
@@ -32,6 +35,9 @@ fun routeCalculatorKey(
     calculatorEngine: CalculatorEngine,
 ): CalculatorRouteResult {
     if (key.length == 1 && isCommonSymbolKeyboard) {
+        if (key.matches(letterPattern)) {
+            return CalculatorRouteResult.NotHandled
+        }
         return CalculatorRouteResult.Handled(key)
     }
 
