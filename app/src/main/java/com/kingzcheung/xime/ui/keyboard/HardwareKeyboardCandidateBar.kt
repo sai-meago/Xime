@@ -98,8 +98,27 @@ fun HardwareKeyboardCandidateBar(
 
     var actualCardHeight by remember { mutableIntStateOf(estCardHeightPx) }
 
+    // 空闲态：无编码且无候选。此时只显示一根「光标竖线」提示输入法已启用、及当前打字位置，
+    // 不画卡片背景/阴影/边框，避免在宿主输入框里出现突兀的小黑块。
+    val isIdle = displayText.isEmpty() && candidates.isEmpty()
+    val idleLineHeightPx = with(density) { 24.dp.toPx() }.roundToInt()
+
+    // 空闲态竖线跟随真实光标（宿主 onUpdateCursorAnchorInfo 上报），无光标坐标时回退到屏幕中部，避免不可见。
+    val idleXPx = with(density) {
+        val maxX = (screenWidthPx - marginPx).coerceAtLeast(marginPx)
+        if (cursorVisible && cursorX - viewLoc[0] > 0) (cursorX - viewLoc[0]).coerceIn(marginPx, maxX)
+        else (screenWidthPx / 2).coerceIn(marginPx, maxX)
+    }
+    val idleYPx = with(density) {
+        val maxY = (screenHeightPx - idleLineHeightPx - marginPx).coerceAtLeast(marginPx)
+        if (cursorVisible && cursorY > 0) (cursorY - viewLoc[1]).coerceIn(marginPx, maxY)
+        else 60.dp.toPx().roundToInt().coerceIn(marginPx, maxY)
+    }
+
     val cardXPx = with(density) {
-        if (pinToBottom) {
+        if (isIdle) {
+            idleXPx
+        } else if (pinToBottom) {
             // 贴底模式：水平居中
             (screenWidthPx - halfEstPx * 2).coerceAtLeast(0) / 2
         } else {
@@ -114,7 +133,9 @@ fun HardwareKeyboardCandidateBar(
     }
 
     val cardYPx = with(density) {
-        if (pinToBottom) {
+        if (isIdle) {
+            idleYPx
+        } else if (pinToBottom) {
             // 贴底模式：固定屏幕底部（预留 8dp 边距）
             (screenHeightPx - actualCardHeight - marginPx).coerceAtLeast(marginPx)
         } else {
@@ -142,25 +163,44 @@ fun HardwareKeyboardCandidateBar(
                 .offset { IntOffset(cardXPx, cardYPx) }
                 .widthIn(min = 160.dp, max = maxCardWidthDp.dp)
                 .wrapContentWidth()
-                .shadow(12.dp, RoundedCornerShape(8.dp))
-                .clip(RoundedCornerShape(8.dp))
-                .background(cardBackgroundColor)
+                .then(
+                    if (isIdle) {
+                        // 空闲态：仅光标竖线，无卡片背景/阴影/圆角，避免压黑宿主输入框
+                        Modifier
+                    } else {
+                        Modifier
+                            .shadow(12.dp, RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(cardBackgroundColor)
+                    }
+                )
                 .onSizeChanged { actualCardHeight = it.height }
                 .onGloballyPositioned { coords ->
                     onCardBoundsChanged?.let { cb ->
-                        val r = coords.boundsInWindow()
-                        cb(
-                            android.graphics.Rect(
-                                r.left.toInt(), r.top.toInt(),
-                                r.right.toInt(), r.bottom.toInt()
+                        // 空闲态（仅光标竖线、无背景）不占触摸区：回调 null 让触摸穿透，
+                        // 避免透明卡片拦截宿主输入框的点击。
+                        if (isIdle) {
+                            cb(null)
+                        } else {
+                            val r = coords.boundsInWindow()
+                            cb(
+                                android.graphics.Rect(
+                                    r.left.toInt(), r.top.toInt(),
+                                    r.right.toInt(), r.bottom.toInt()
+                                )
                             )
-                        )
+                        }
                     }
                 }
         ) {
             Column(
                 modifier = Modifier
-                    .padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
+                    .padding(
+                        start = if (isIdle) 0.dp else 12.dp,
+                        end = if (isIdle) 0.dp else 12.dp,
+                        top = if (isIdle) 0.dp else 4.dp,
+                        bottom = if (isIdle) 0.dp else 4.dp
+                    )
                     .widthIn(max = maxCardWidthDp.dp - 24.dp)
             ) {
                 Row(
