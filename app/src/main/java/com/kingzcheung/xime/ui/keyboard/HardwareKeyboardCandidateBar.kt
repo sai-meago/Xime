@@ -103,16 +103,21 @@ fun HardwareKeyboardCandidateBar(
     val isIdle = displayText.isEmpty() && candidates.isEmpty()
     val idleLineHeightPx = with(density) { 24.dp.toPx() }.roundToInt()
 
-    // 空闲态竖线跟随真实光标（宿主 onUpdateCursorAnchorInfo 上报），无光标坐标时回退到屏幕中部，避免不可见。
+    // 空闲竖线仅在宿主上报了有效光标坐标（onUpdateCursorAnchorInfo）时显示；
+    // 无坐标（宿主未上报/未聚焦）直接不渲染，避免竖线落在错误位置（如输入框外、屏幕中部）。
+    if (isIdle && !(cursorVisible && cursorY > 0 && cursorX > 0)) {
+        onCardBoundsChanged?.invoke(null)
+        return
+    }
+    // cursorY 为宿主光标【底部】坐标（Service 取 insertionMarkerBottom / characterBounds.bottom）：
+    // 竖线以其为底端、向上绘制，正好覆盖宿主光标行高，不会再穿出输入框下边界。
     val idleXPx = with(density) {
         val maxX = (screenWidthPx - marginPx).coerceAtLeast(marginPx)
-        if (cursorVisible && cursorX - viewLoc[0] > 0) (cursorX - viewLoc[0]).coerceIn(marginPx, maxX)
-        else (screenWidthPx / 2).coerceIn(marginPx, maxX)
+        (cursorX - viewLoc[0]).coerceIn(marginPx, maxX)
     }
     val idleYPx = with(density) {
         val maxY = (screenHeightPx - idleLineHeightPx - marginPx).coerceAtLeast(marginPx)
-        if (cursorVisible && cursorY > 0) (cursorY - viewLoc[1]).coerceIn(marginPx, maxY)
-        else 60.dp.toPx().roundToInt().coerceIn(marginPx, maxY)
+        (cursorY - viewLoc[1] - idleLineHeightPx).coerceIn(marginPx, maxY)
     }
 
     val cardXPx = with(density) {
